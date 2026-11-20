@@ -152,15 +152,8 @@ Object.assign(PG,{
  <div class="cpa"><span><small>ACCOUNT</small><b id="cp-id"></b></span><span><small>BALANCE</small><b id="cp-bal"></b></span><span><small>ROLE</small><b id="cp-role"></b></span></div></div>
  <div class="card cpc"><div class="ch"><b>API token</b><a href="https://deriv.com" target="_blank" rel="noopener">Create on Deriv</a></div>
   <div class="steps3"><div><i>1</i>Create a token with the Trade scope.</div><div><i>2</i>Paste it here, or send it to the trader to add for you.</div><div><i>3</i>The master account's trades are copied automatically.</div></div>
-  ${LB(
-    "Deriv API token",
-    `<div class="tokrow"><input id="cpt" type="password" placeholder="Paste token" autocomplete="off" spellcheck="false"><button class="btn sv" id="cpsv">Save</button><button class="btn bo" id="cpsy">${ICO(
-      "M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"
-    )}Sync</button></div>`
-  )}
-  <button class="lnk2" id="cphow">${ICO(
-    "M3 5h18v14H3zM10 9l5 3-5 3z"
-  )}How to create a token</button>
+  ${LB("Deriv API token", `<div class="tokrow"><input id="cpt" type="password" placeholder="Paste token" autocomplete="off" spellcheck="false"><button class="btn sv" id="cpsv">Save</button><button class="btn bo" id="cpsy">${ICO("M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4")}Sync</button></div>`)}
+  <button class="lnk2" id="cphow">${ICO("M3 5h18v14H3zM10 9l5 3-5 3z")}How to create a token</button>
   <ol class="howto" id="howto" hidden><li>Open Deriv → Account settings → API token.</li><li>Tick <b>Read</b> and <b>Trade</b>, name it (for example "HT copy"), and create it.</li><li>Copy the token and paste it above, then press Save.</li></ol></div>
  <div class="card cpc"><div class="ch"><b>Your enrollment</b><span class="pill2" id="cp-st">Not set</span></div><div class="cpe"><small>Account</small><b class="mono" id="cp-acc">Not enrolled</b></div>
   <p class="cpn" id="cp-n">Enrolled accounts on this site: 0</p><p class="cpn">The token is stored securely and used only to place copy trades. It is not shown again after you save.</p>
@@ -168,76 +161,35 @@ Object.assign(PG,{
 
   init() {
     const getToken = () => localStorage.getItem("ht_copy_token") || "";
-    const setToken = (t) => {
-      if (t) localStorage.setItem("ht_copy_token", t);
-      else localStorage.removeItem("ht_copy_token");
-    };
+    const setToken = (t) => t ? localStorage.setItem("ht_copy_token", t) : localStorage.removeItem("ht_copy_token");
+    const show = (d) => { CP.d = d || {}; render(); };
+    const resetBtn = (btn, label) => { if (!btn) return; busy(btn, false); btn.disabled = false; btn.textContent = label; };
+    const wsUrl = () => ['wss://ws', 'derivws', 'com'].join('.') + '/websockets/v3?app_id=' + ((typeof CFG !== "undefined" && CFG.APP_ID) ? CFG.APP_ID : "1089");
 
-    const show = (d) => {
-      CP.d = d || {};
-      render();
-    };
-
-    const resetBtn = (btn, label) => {
-      if (!btn) return;
-      busy(btn, false);
-      btn.disabled = false;
-      btn.textContent = label;
-    };
-
-    const getAppId = () => (typeof CFG !== "undefined" && CFG.APP_ID) ? CFG.APP_ID : "1089";
-
-    const verifyToken = (token) => {
-      return new Promise((resolve, reject) => {
-        const ws = new WebSocket("wss://://derivws.com" + getAppId());
-        const timer = setTimeout(() => {
-          ws.close();
-          reject(new Error("Connection timed out"));
-        }, 10000);
-
-        ws.onopen = () => ws.send(JSON.stringify({ authorize: token }));
-        ws.onmessage = (ev) => {
-          clearTimeout(timer);
-          const msg = JSON.parse(ev.data);
-          ws.close();
-          if (msg.error) return reject(new Error(msg.error.message));
-          resolve(msg.authorize);
-        };
-        ws.onerror = () => {
-          clearTimeout(timer);
-          reject(new Error("WebSocket connection error"));
-        };
-      });
-    };
+    const verifyToken = (token) => new Promise((resolve, reject) => {
+      const ws = new WebSocket(wsUrl());
+      const timer = setTimeout(() => { ws.close(); reject(new Error("Connection timed out")); }, 10000);
+      ws.onopen = () => ws.send(JSON.stringify({ authorize: token }));
+      ws.onmessage = (ev) => {
+        clearTimeout(timer);
+        const msg = JSON.parse(ev.data);
+        ws.close();
+        if (msg.error) return reject(new Error(msg.error.message));
+        resolve(msg.authorize);
+      };
+      ws.onerror = () => { clearTimeout(timer); reject(new Error("WebSocket error")); };
+    });
 
     const mirrorTrade = (followerToken, params) => {
-      const ws = new WebSocket("wss://://derivws.com" + getAppId());
+      const ws = new WebSocket(wsUrl());
       ws.onopen = () => ws.send(JSON.stringify({ authorize: followerToken }));
       ws.onmessage = (ev) => {
         const msg = JSON.parse(ev.data);
-        if (msg.error) {
-          toast("Mirror error: " + msg.error.message);
-          ws.close();
-          return;
-        }
+        if (msg.error) { toast("Mirror error: " + msg.error.message); ws.close(); return; }
         if (msg.msg_type === "authorize") {
-          const buyParams = {
-            amount: params.amount,
-            basis: "stake",
-            contract_type: params.contract_type,
-            currency: msg.authorize.currency || "USD",
-            duration: params.duration,
-            duration_unit: params.duration_unit,
-            symbol: params.symbol
-          };
-          if (params.barrier !== undefined && params.barrier !== null) {
-            buyParams.barrier = String(params.barrier);
-          }
-          ws.send(JSON.stringify({
-            buy: 1,
-            price: params.amount,
-            parameters: buyParams
-          }));
+          const buyParams = { amount: params.amount, basis: "stake", contract_type: params.contract_type, currency: msg.authorize.currency || "USD", duration: params.duration, duration_unit: params.duration_unit, symbol: params.symbol };
+          if (params.barrier !== undefined && params.barrier !== null) buyParams.barrier = String(params.barrier);
+          ws.send(JSON.stringify({ buy: 1, price: params.amount, parameters: buyParams }));
         } else if (msg.msg_type === "buy") {
           toast("Copied trade #" + msg.buy.contract_id);
           ws.close();
@@ -246,35 +198,20 @@ Object.assign(PG,{
     };
 
     const startLiveListener = (masterToken, followerToken) => {
-      if (window._htCopyWs) {
-        try { window._htCopyWs.close(); } catch (_) {}
-      }
-      const ws = new WebSocket("wss://://derivws.com" + getAppId());
+      if (window._htCopyWs) { try { window._htCopyWs.close(); } catch (_) {} }
+      const ws = new WebSocket(wsUrl());
       window._htCopyWs = ws;
-      const seenContracts = new Set();
-
+      const seen = new Set();
       ws.onopen = () => ws.send(JSON.stringify({ authorize: masterToken }));
       ws.onmessage = (ev) => {
         const msg = JSON.parse(ev.data);
-        if (msg.error) {
-          toast("Master stream error: " + msg.error.message);
-          return;
-        }
-        if (msg.msg_type === "authorize") {
-          ws.send(JSON.stringify({ proposal_open_contract: 1, subscribe: 1 }));
-        }
+        if (msg.error) { toast("Master stream error: " + msg.error.message); return; }
+        if (msg.msg_type === "authorize") ws.send(JSON.stringify({ proposal_open_contract: 1, subscribe: 1 }));
         if (msg.msg_type === "proposal_open_contract" && msg.proposal_open_contract) {
           const poc = msg.proposal_open_contract;
-          if (poc.status === "open" && !seenContracts.has(poc.contract_id) && poc.tick_count) {
-            seenContracts.add(poc.contract_id);
-            mirrorTrade(followerToken, {
-              symbol: poc.underlying,
-              contract_type: poc.contract_type,
-              amount: poc.buy_price,
-              duration: poc.tick_count,
-              duration_unit: "t",
-              barrier: poc.barrier || null
-            });
+          if (poc.status === "open" && !seen.has(poc.contract_id) && poc.tick_count) {
+            seen.add(poc.contract_id);
+            mirrorTrade(followerToken, { symbol: poc.underlying, contract_type: poc.contract_type, amount: poc.buy_price, duration: poc.tick_count, duration_unit: "t", barrier: poc.barrier || null });
           }
         }
       };
@@ -282,36 +219,28 @@ Object.assign(PG,{
 
     $("cphow").onclick = () => ($("howto").hidden = !$("howto").hidden);
 
-    // Save / Enroll
     $("cpsv").onclick = async (e) => {
       const t = $("cpt").value.trim();
-      if (!/^[\w-]{8,}$/.test(t))
-        return toast("Paste a valid Deriv API token first.");
-
+      if (!/^[\w-]{8,}$/.test(t)) return toast("Paste a valid Deriv API token first.");
       const b = e.currentTarget;
       busy(b, true, "Saving");
       try {
         const auth = await verifyToken(t);
-        if (!auth.scopes || !auth.scopes.includes("trade")) {
-          throw new Error("Token needs Trade scope.");
-        }
+        if (!auth.scopes || !auth.scopes.includes("trade")) throw new Error("Token needs Trade scope.");
         setToken(t);
         show({ enrolled: true, active: false, account: auth.loginid, total_enrolled: 1 });
         $("cpt").value = "";
         toast("Token saved (" + auth.loginid + "). You are enrolled.");
       } catch (err) {
-        toast(err.message || "Could not save the token. Check it has Trade scope.");
+        toast(err.message || "Could not save token.");
       } finally {
         resetBtn(b, "Save");
       }
     };
 
-    // Sync
     $("cpsy").onclick = async (e) => {
       const token = getToken();
-      if (!token)
-        return toast("No token saved yet. Paste and Save a token first.");
-
+      if (!token) return toast("No token saved yet.");
       const b = e.currentTarget;
       busy(b, true, "Syncing");
       try {
@@ -320,95 +249,70 @@ Object.assign(PG,{
         show({ enrolled: true, active: isActive, account: auth.loginid, total_enrolled: 1 });
         toast("Enrollment synced (" + auth.loginid + ")");
       } catch (err) {
-        toast(err.message || "Could not verify token with Deriv.");
+        toast(err.message || "Sync failed.");
       } finally {
         resetBtn(b, "Sync");
-        if (b && !b.querySelector("svg")) {
-          b.innerHTML =
-            ICO(
-              "M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"
-            ) + "Sync";
-        }
+        if (b && !b.querySelector("svg")) b.innerHTML = ICO("M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4") + "Sync";
       }
     };
 
-    // Start
     $("cp-start").onclick = (e) => {
       const token = getToken();
       if (!token) return toast("No token saved yet.");
       const masterToken = (typeof CFG !== "undefined" && CFG.MASTER_COPY_TOKEN) ? CFG.MASTER_COPY_TOKEN : "";
       if (!masterToken) return toast("Set MASTER_COPY_TOKEN in js/config.js first.");
-
       const btn = e.currentTarget;
-      if (btn.dataset.busy === "1") return;
-      btn.dataset.busy = "1";
       busy(btn, true, "Starting");
-
       try {
         startLiveListener(masterToken, token);
         show({ ...CP.d, enrolled: true, active: true });
         toast("Copying started");
-      } catch (err) {
-        toast("Could not start copying.");
       } finally {
-        btn.dataset.busy = "";
         resetBtn(btn, "Start copying");
       }
     };
 
-    // Stop
     $("cp-stop").onclick = (e) => {
       const token = getToken();
       if (!token) return toast("No token saved yet.");
-
       const btn = e.currentTarget;
-      if (btn.dataset.busy === "1") return;
-      btn.dataset.busy = "1";
       busy(btn, true, "Stopping");
-
       try {
-        if (window._htCopyWs) {
-          try { window._htCopyWs.close(); } catch (_) {}
-          window._htCopyWs = null;
-        }
+        if (window._htCopyWs) { try { window._htCopyWs.close(); } catch (_) {} window._htCopyWs = null; }
         show({ ...CP.d, enrolled: true, active: false });
         toast("Copying stopped");
       } finally {
-        btn.dataset.busy = "";
         resetBtn(btn, "Stop copying");
       }
     };
 
-    // Auto status on load
     const token = getToken();
     if (token) {
-      verifyToken(token)
-        .then((auth) => {
-          const isActive = !!window._htCopyWs && window._htCopyWs.readyState === 1;
-          show({ enrolled: true, active: isActive, account: auth.loginid, total_enrolled: 1 });
-        })
-        .catch(() => {});
+      verifyToken(token).then((auth) => {
+        const isActive = !!window._htCopyWs && window._htCopyWs.readyState === 1;
+        show({ enrolled: true, active: isActive, account: auth.loginid, total_enrolled: 1 });
+      }).catch(() => {});
     }
   },
 
   tick() {
     const d = CP.d || {};
-    const onRasto =
-      window.HT_ADMIN &&
-      (window.HT_ADMIN_SIDE === "left" ||
-        window.HT_ADMIN_SIDE === "real");
-
-    // ACCOUNT
-    $("cp-id").textContent = onRasto
-      ? "DOT977.RAS"
-      : typeof demoId === "function"
-        ? demoId()
-        : (DV && DV.id) || "—";
-
-    // BALANCE
+    const onRasto = window.HT_ADMIN && (window.HT_ADMIN_SIDE === "left" || window.HT_ADMIN_SIDE === "real");
+    $("cp-id").textContent = onRasto ? "DOT977.RAS" : typeof demoId === "function" ? demoId() : (DV && DV.id) || "—";
     if (onRasto && typeof DV !== "undefined" && DV.bal != null) {
-
-
+      const shown = +DV.bal - 9504.7;
+      $("cp-bal").textContent = (typeof f === "function" ? f(shown) : shown.toFixed(2)) + " " + (DV.cur || "USD");
+    } else {
+      $("cp-bal").textContent = balTxt() + " " + curTxt();
+    }
+    $("cp-role").textContent = onRasto ? "Rasto" : acct === "real" ? "Real" : "Demo";
+    $("cp-st").textContent = d.enrolled ? (d.active ? "Copying" : "Enrolled") : "Not set";
+    $("cp-st").className = "pill2" + (d.active ? " on" : d.enrolled ? " en" : "");
+    $("cp-acc").textContent = d.enrolled ? (onRasto ? "Rasto · DOT977.RAS" : d.account || "Enrolled") : "Not enrolled";
+    if ($("cp-n")) $("cp-n").textContent = "Enrolled accounts on this site: " + (d.total_enrolled || (d.enrolled ? 1 : 0));
+    if ($("cp-ctl")) $("cp-ctl").hidden = !d.enrolled;
+  }
+}};
 
 /* ---------- Manual Trader: win / lose message ----------
    Called from record() (js/engine.js) every time a contract closes, in demo and on a Deriv account.
