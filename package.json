@@ -1,0 +1,8 @@
+{
+  "name": "ht-trade",
+  "private": true,
+  "dependencies": {
+    "ws": "^8.18.0",
+    "@upstash/redis": "^1.34.0"
+  }
+}
