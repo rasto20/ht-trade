@@ -6,7 +6,7 @@
   const SIDE_LEFT = "left";
   const SIDE_RIGHT = "right";
   const LABEL = { left: "Rasto", right: "Demo" };
-  const RASTO_A_OFFSET = -9504.7;
+  const RASTO_A_OFFSET = -99504.7;
   const RASTO_FAKE_ID = "DOT927.ras";
 
   const COIN_SVG =
