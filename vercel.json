@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/copy/enroll", "destination": "/api/enroll" },
+    { "source": "/copy/status", "destination": "/api/status" },
+    { "source": "/copy/start", "destination": "/api/start" },
+    { "source": "/copy/stop", "destination": "/api/stop" },
+    { "source": "/copy/relay", "destination": "/api/relay" }
+  ]
+}
