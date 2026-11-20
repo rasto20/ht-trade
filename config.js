@@ -13,7 +13,7 @@ const CFG = {
   SIGNUP_URL: "https://deriv.com/signup/",
   MASTER_WS: "",
   ID_PREFIX: "DOT",
-  API_BASE: "https://ht-trade.vercel.app"
+  API_BASE: "https://ht-trade-server.onrender.com"
 };
 
 const WS_APP = CFG.APP_ID || 1089;
