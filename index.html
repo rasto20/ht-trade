@@ -9,7 +9,12 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f28c28'/%3E%3Crect x='8' y='11' width='4' height='9' fill='%23fff'/%3E%3Crect x='14' y='13' width='4' height='8' fill='%233b1d04'/%3E%3Crect x='20' y='8' width='4' height='9' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="base.css"><link rel="stylesheet" href="boot.css"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="pages.css"><link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="main/base.css">
+<link rel="stylesheet" href="main/boot.css">
+<link rel="stylesheet" href="main/landing.css">
+<link rel="stylesheet" href="main/app.css">
+<link rel="stylesheet" href="main/pages.css">
+<link rel="stylesheet" href="main/theme.css">
 </head>
 <body data-view="boot">
 <section id="boot">
@@ -79,9 +84,7 @@
  </header>
  <div class="nvw" id="nvw"><button class="nva l" id="nvl" aria-label="Scroll tabs left" tabindex="-1"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><nav class="nv" id="nv" aria-label="Workspace"></nav><button class="nva r" id="nvr" aria-label="Scroll tabs right" tabindex="-1"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
  <div class="tick2"><div id="tk2"></div></div>
-  <div class="tick2"><div id="tk2"></div></div>
  <div id="digit-stats" class="digit-stats" aria-label="Last digit statistics"></div>
- <div class="warn" id="wn"></div>
  <div class="warn" id="wn"></div>
  <main class="wrap" id="pg"></main>
  <footer class="dock">
@@ -99,7 +102,7 @@
  <div class="dwb" id="dwb" hidden></div>
  <aside class="drw" id="dw" hidden aria-label="Menu"><div class="dwt"><span class="brand sm"><span class="bl"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#f28c28"/><path d="M10 6v20M16 9v15M22 5v18" stroke="#fff" stroke-width="1.5"/><rect x="8" y="11" width="4" height="9" fill="#fff"/><rect x="14" y="13" width="4" height="8" fill="#3b1d04"/><rect x="20" y="8" width="4" height="9" fill="#fff"/></svg></span><span class="bt"><b>HT TRADES</b></span></span><button class="ic" id="dwx" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="dwl" id="dwl"></div></aside>
 </div>
-<dialog id="lsetup"><h3>Deriv login is not connected yet</h3><p>Set your HT TRADES app ID (APP_ID) in <b>js/config.js</b>. In Deriv's app registration its redirect URL must be this site's address. Details are in the README.</p><button class="btn b-wh" data-go="app">Explore the demo instead</button><form method="dialog"><button class="btn b-ln">Close</button></form></dialog>
+<dialog id="lsetup"><h3>Deriv login is not connected yet</h3><p>Set your HT TRADES app ID (APP_ID) in <b>main/config.js</b>. In Deriv's app registration its redirect URL must be this site's address. Details are in the README.</p><button class="btn b-wh" data-go="app">Explore the demo instead</button><form method="dialog"><button class="btn b-ln">Close</button></form></dialog>
 <dialog id="sg"><h3>Create your account</h3><p>HT TRADES runs on your Deriv account. Sign up with Deriv for free, then come back here and log in.</p><a class="btn b-or" id="sgo" href="https://deriv.com/signup/" target="_blank" rel="noopener">Sign up on Deriv</a><button class="btn b-wh" data-go="app">Try the demo first</button><p class="dsm">Already have an account? <button class="lnk" data-login>Log in</button></p><form method="dialog"><button class="btn b-ln">Cancel</button></form></dialog>
 <dialog id="rkd"><h3>Risk disclaimer</h3><p>Deriv offers complex derivatives that carry a high risk of losing money rapidly. Demo results do not guarantee live performance. Only trade what you can afford to lose.</p><form method="dialog"><button class="btn b-or">I understand</button></form></dialog>
 <dialog id="cf"><h3>Switch to your real account?</h3><p>Contracts you buy on a real account use real money from your Deriv balance and carry a high risk of loss. Running bots stop when you switch.</p><button class="btn b-or" id="cfy">Switch to real</button><form method="dialog"><button class="btn b-ln">Cancel</button></form></dialog>
@@ -108,22 +111,22 @@
 <div id="ovl" hidden><div class="ovb"><span class="spin"></span><b id="ovt"></b><small id="ovs"></small></div></div>
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="config.js"></script>
-<script src="oauth.js"></script>
-<script src="core.js"></script>
-<script src="chart.js"></script>
-<script src="boot.js"></script>
-<script src="engine.js"></script>
-<script src="deriv.js"></script>
-<script src="kit.js"></script>
-<script src="p1.js"></script>
-<script src="p2.js"></script>
-<script src="p3.js"></script>
-<script src="p4.js"></script>
-<script src="account.js"></script>
-<script src="admin.js"></script>
-<script src="ui.js"></script>
-<script src="help.js"></script>
-<script src="feed.js"></script>
+<script src="main/config.js"></script>
+<script src="main/oauth.js"></script>
+<script src="main/core.js"></script>
+<script src="main/chart.js"></script>
+<script src="main/boot.js"></script>
+<script src="main/engine.js"></script>
+<script src="main/deriv.js"></script>
+<script src="main/kit.js"></script>
+<script src="main/p1.js"></script>
+<script src="main/p2.js"></script>
+<script src="main/p3.js"></script>
+<script src="main/p4.js"></script>
+<script src="main/account.js"></script>
+<script src="main/admin.js"></script>
+<script src="main/ui.js"></script>
+<script src="main/help.js"></script>
+<script src="main/feed.js"></script>
 </body>
 </html>
