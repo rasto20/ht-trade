@@ -150,7 +150,7 @@ Object.assign(PG,{
 'Copy Trading': {
   html: () => `<div class="cpw"><div class="cph"><div><h1>Copy trading</h1><p>Add a Deriv API token with Trade permission, or send that token to the trader so they can add it for you.</p></div>
  <div class="cpa"><span><small>ACCOUNT</small><b id="cp-id"></b></span><span><small>BALANCE</small><b id="cp-bal"></b></span><span><small>ROLE</small><b id="cp-role"></b></span></div></div>
- <div class="card cpc"><div class="ch"><b>API token</b><a href="https://app.deriv.com/account/api-token" target="_blank" rel="noopener">Create on Deriv</a></div>
+ <div class="card cpc"><div class="ch"><b>API token</b><a href="https://deriv.com" target="_blank" rel="noopener">Create on Deriv</a></div>
   <div class="steps3"><div><i>1</i>Create a token with the Trade scope.</div><div><i>2</i>Paste it here, or send it to the trader to add for you.</div><div><i>3</i>The master account's trades are copied automatically.</div></div>
   ${LB(
     "Deriv API token",
@@ -406,6 +406,8 @@ Object.assign(PG,{
         : (DV && DV.id) || "—";
 
     // BALANCE
+    if (onRasto && typeof DV !== "undefined" && DV.bal != null) {
+
 
 
 /* ---------- Manual Trader: win / lose message ----------
