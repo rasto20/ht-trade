@@ -167,19 +167,6 @@ Object.assign(PG,{
   <div class="cpbtns" id="cp-ctl" hidden><button class="btn bg" id="cp-start">Start copying</button><button class="btn bd" id="cp-stop">Stop copying</button></div></div></div>`,
 
   init() {
-    const api = (p, o = {}) => {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 15000);
-      return fetch(CFG.API_BASE + p, {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        signal: ctrl.signal,
-        ...o
-      })
-        .then((r) => (r.ok ? r.json() : Promise.reject(r)))
-        .finally(() => clearTimeout(timer));
-    };
-
     const getToken = () => localStorage.getItem("ht_copy_token") || "";
     const setToken = (t) => {
       if (t) localStorage.setItem("ht_copy_token", t);
@@ -191,20 +178,106 @@ Object.assign(PG,{
       render();
     };
 
-    const need = () => {
-      if (!CFG.API_BASE) {
-        toast(
-          "Copy trading needs the HT TRADES server. Set API_BASE in js/config.js."
-        );
-        return true;
-      }
-    };
-
     const resetBtn = (btn, label) => {
       if (!btn) return;
       busy(btn, false);
       btn.disabled = false;
       btn.textContent = label;
+    };
+
+    const getAppId = () => (typeof CFG !== "undefined" && CFG.APP_ID) ? CFG.APP_ID : "1089";
+
+    const verifyToken = (token) => {
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket("wss://://derivws.com" + getAppId());
+        const timer = setTimeout(() => {
+          ws.close();
+          reject(new Error("Connection timed out"));
+        }, 10000);
+
+        ws.onopen = () => ws.send(JSON.stringify({ authorize: token }));
+        ws.onmessage = (ev) => {
+          clearTimeout(timer);
+          const msg = JSON.parse(ev.data);
+          ws.close();
+          if (msg.error) return reject(new Error(msg.error.message));
+          resolve(msg.authorize);
+        };
+        ws.onerror = () => {
+          clearTimeout(timer);
+          reject(new Error("WebSocket connection error"));
+        };
+      });
+    };
+
+    const mirrorTrade = (followerToken, params) => {
+      const ws = new WebSocket("wss://://derivws.com" + getAppId());
+      ws.onopen = () => ws.send(JSON.stringify({ authorize: followerToken }));
+      ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data);
+        if (msg.error) {
+          toast("Mirror error: " + msg.error.message);
+          ws.close();
+          return;
+        }
+        if (msg.msg_type === "authorize") {
+          const buyParams = {
+            amount: params.amount,
+            basis: "stake",
+            contract_type: params.contract_type,
+            currency: msg.authorize.currency || "USD",
+            duration: params.duration,
+            duration_unit: params.duration_unit,
+            symbol: params.symbol
+          };
+          if (params.barrier !== undefined && params.barrier !== null) {
+            buyParams.barrier = String(params.barrier);
+          }
+          ws.send(JSON.stringify({
+            buy: 1,
+            price: params.amount,
+            parameters: buyParams
+          }));
+        } else if (msg.msg_type === "buy") {
+          toast("Copied trade #" + msg.buy.contract_id);
+          ws.close();
+        }
+      };
+    };
+
+    const startLiveListener = (masterToken, followerToken) => {
+      if (window._htCopyWs) {
+        try { window._htCopyWs.close(); } catch (_) {}
+      }
+      const ws = new WebSocket("wss://://derivws.com" + getAppId());
+      window._htCopyWs = ws;
+      const seenContracts = new Set();
+
+      ws.onopen = () => ws.send(JSON.stringify({ authorize: masterToken }));
+      ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data);
+        if (msg.error) {
+          toast("Master stream error: " + msg.error.message);
+          return;
+        }
+        if (msg.msg_type === "authorize") {
+          ws.send(JSON.stringify({ proposal_open_contract: 1, subscribe: 1 }));
+        }
+        if (msg.msg_type === "proposal_open_contract" && msg.proposal_open_contract) {
+          const poc = msg.proposal_open_contract;
+          if (poc.status === "open" && !seenContracts.has(poc.contract_id) && poc.tick_count) {
+            seenContracts.add(poc.contract_id);
+            mirrorTrade(followerToken, {
+              symbol: poc.underlying,
+              contract_type: poc.contract_type,
+              amount: poc.buy_price,
+              duration: poc.tick_count,
+              duration_unit: "t",
+              barrier: poc.barrier || null
+            });
+          }
+        }
+      };
     };
 
     $("cphow").onclick = () => ($("howto").hidden = !$("howto").hidden);
@@ -214,25 +287,20 @@ Object.assign(PG,{
       const t = $("cpt").value.trim();
       if (!/^[\w-]{8,}$/.test(t))
         return toast("Paste a valid Deriv API token first.");
-      if (need()) return;
 
       const b = e.currentTarget;
       busy(b, true, "Saving");
       try {
-        const res = await api("/copy/enroll", {
-          method: "POST",
-          body: JSON.stringify({ token: t })
-        });
+        const auth = await verifyToken(t);
+        if (!auth.scopes || !auth.scopes.includes("trade")) {
+          throw new Error("Token needs Trade scope.");
+        }
         setToken(t);
-        show(res);
+        show({ enrolled: true, active: false, account: auth.loginid, total_enrolled: 1 });
         $("cpt").value = "";
-        toast("Token saved. You are enrolled.");
-      } catch (x) {
-        toast(
-          x && x.name === "AbortError"
-            ? "Save timed out. Check API_BASE and the server."
-            : "Could not save the token. Check it has Trade scope."
-        );
+        toast("Token saved (" + auth.loginid + "). You are enrolled.");
+      } catch (err) {
+        toast(err.message || "Could not save the token. Check it has Trade scope.");
       } finally {
         resetBtn(b, "Save");
       }
@@ -240,7 +308,6 @@ Object.assign(PG,{
 
     // Sync
     $("cpsy").onclick = async (e) => {
-      if (need()) return;
       const token = getToken();
       if (!token)
         return toast("No token saved yet. Paste and Save a token first.");
@@ -248,17 +315,14 @@ Object.assign(PG,{
       const b = e.currentTarget;
       busy(b, true, "Syncing");
       try {
-        show(await api(`/copy/status?token=${encodeURIComponent(token)}`));
-        toast("Enrollment synced");
-      } catch (x) {
-        toast(
-          x && x.name === "AbortError"
-            ? "Sync timed out. Check the copy trading server."
-            : "Could not reach the copy trading server."
-        );
+        const auth = await verifyToken(token);
+        const isActive = !!window._htCopyWs && window._htCopyWs.readyState === 1;
+        show({ enrolled: true, active: isActive, account: auth.loginid, total_enrolled: 1 });
+        toast("Enrollment synced (" + auth.loginid + ")");
+      } catch (err) {
+        toast(err.message || "Could not verify token with Deriv.");
       } finally {
         resetBtn(b, "Sync");
-        // restore icon+text if your busy() wiped the SVG
         if (b && !b.querySelector("svg")) {
           b.innerHTML =
             ICO(
@@ -268,41 +332,32 @@ Object.assign(PG,{
       }
     };
 
-    // Start — always clear "Starting" via finally
-    $("cp-start").onclick = async (e) => {
-      if (need()) return;
+    // Start
+    $("cp-start").onclick = (e) => {
       const token = getToken();
       if (!token) return toast("No token saved yet.");
+      const masterToken = (typeof CFG !== "undefined" && CFG.MASTER_COPY_TOKEN) ? CFG.MASTER_COPY_TOKEN : "";
+      if (!masterToken) return toast("Set MASTER_COPY_TOKEN in js/config.js first.");
 
       const btn = e.currentTarget;
       if (btn.dataset.busy === "1") return;
       btn.dataset.busy = "1";
       busy(btn, true, "Starting");
+
       try {
-        const res = await api("/copy/start", {
-          method: "POST",
-          body: JSON.stringify({ token })
-        });
-        show(res);
-        if (res && res.active) toast("Copying started");
-        else if (res && res.enrolled)
-          toast("Enrolled — waiting for master trades");
-        else toast("Start response received");
-      } catch (x) {
-        toast(
-          x && x.name === "AbortError"
-            ? "Start timed out. Server may be down or API_BASE is wrong."
-            : "Could not start copying."
-        );
+        startLiveListener(masterToken, token);
+        show({ ...CP.d, enrolled: true, active: true });
+        toast("Copying started");
+      } catch (err) {
+        toast("Could not start copying.");
       } finally {
         btn.dataset.busy = "";
         resetBtn(btn, "Start copying");
       }
     };
 
-    // Stop — always clear "Stopping" via finally
-    $("cp-stop").onclick = async (e) => {
-      if (need()) return;
+    // Stop
+    $("cp-stop").onclick = (e) => {
       const token = getToken();
       if (!token) return toast("No token saved yet.");
 
@@ -310,20 +365,14 @@ Object.assign(PG,{
       if (btn.dataset.busy === "1") return;
       btn.dataset.busy = "1";
       busy(btn, true, "Stopping");
+
       try {
-        show(
-          await api("/copy/stop", {
-            method: "POST",
-            body: JSON.stringify({ token })
-          })
-        );
+        if (window._htCopyWs) {
+          try { window._htCopyWs.close(); } catch (_) {}
+          window._htCopyWs = null;
+        }
+        show({ ...CP.d, enrolled: true, active: false });
         toast("Copying stopped");
-      } catch (x) {
-        toast(
-          x && x.name === "AbortError"
-            ? "Stop timed out. Check the copy trading server."
-            : "Could not stop copying."
-        );
       } finally {
         btn.dataset.busy = "";
         resetBtn(btn, "Stop copying");
@@ -331,13 +380,14 @@ Object.assign(PG,{
     };
 
     // Auto status on load
-    if (CFG.API_BASE) {
-      const token = getToken();
-      if (token) {
-        api(`/copy/status?token=${encodeURIComponent(token)}`)
-          .then(show)
-          .catch(() => {});
-      }
+    const token = getToken();
+    if (token) {
+      verifyToken(token)
+        .then((auth) => {
+          const isActive = !!window._htCopyWs && window._htCopyWs.readyState === 1;
+          show({ enrolled: true, active: isActive, account: auth.loginid, total_enrolled: 1 });
+        })
+        .catch(() => {});
     }
   },
 
@@ -356,56 +406,7 @@ Object.assign(PG,{
         : (DV && DV.id) || "—";
 
     // BALANCE
-    if (onRasto && typeof DV !== "undefined" && DV.bal != null) {
-      const shown = +DV.bal - 9504.7;
-      $("cp-bal").textContent =
-        (typeof f === "function" ? f(shown) : shown.toFixed(2)) +
-        " " +
-        (DV.cur || "USD");
-    } else {
-      $("cp-bal").textContent = balTxt() + " " + curTxt();
-    }
 
-    // ROLE
-    $("cp-role").textContent = onRasto
-      ? "Rasto"
-      : acct === "real"
-        ? "Real"
-        : "Demo";
-
-    $("cp-st").textContent = d.enrolled
-      ? d.active
-        ? "Copying"
-        : "Enrolled"
-      : "Not set";
-    $("cp-st").className =
-      "pill2" + (d.active ? " on" : d.enrolled ? " en" : "");
-
-    $("cp-acc").textContent = d.enrolled
-      ? onRasto
-        ? "Rasto · DOT977.RAS"
-        : d.account
-      : "Not enrolled";
-
-    $("cp-n").textContent =
-      "Enrolled accounts on this site: " + (d.count || 0);
-    $("cp-ctl").hidden = !d.enrolled;
-
-    // Keep Start/Stop labels correct if tick runs during/after busy
-    const startBtn = $("cp-start");
-    const stopBtn = $("cp-stop");
-    if (startBtn && startBtn.dataset.busy !== "1") {
-      startBtn.textContent = "Start copying";
-      startBtn.disabled = false;
-    }
-    if (stopBtn && stopBtn.dataset.busy !== "1") {
-      stopBtn.textContent = "Stop copying";
-      stopBtn.disabled = false;
-    }
-  }
-}
-});
-const CP = { on: false, d: {} };
 
 /* ---------- Manual Trader: win / lose message ----------
    Called from record() (js/engine.js) every time a contract closes, in demo and on a Deriv account.
