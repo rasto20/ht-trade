@@ -1,4 +1,80 @@
-https://ht-trade.vercel.app/?admin=1xed(m.d);
+/* Signal AI, Bulk Trader, Manual Trader, Copy Trading */
+
+/* ---------- shared statistics ---------- */
+const lastDigits=(k,n)=>H[k].slice(-n).map(v=>digit(k,v));
+const digitPct=(k,n)=>{const ds=lastDigits(k,n),c=Array(10).fill(0);ds.forEach(d=>c[d]++);return{ds,pct:c.map(v=>ds.length?v/ds.length*100:0)}};
+const upPct=(k,n)=>{const s=H[k].slice(-n-1);let u=0;for(let i=1;i<s.length;i++)if(s[i]>s[i-1])u++;return s.length>1?u/(s.length-1)*100:50};
+/* Best contract for a strategy on one market, from observed frequencies over n ticks. edge = observed win rate - break-even rate */
+function bestFor(strat,k,n){const{pct}=digitPct(k,n),be=t=>TT[t][1](0)*100,c=[];
+ if(strat==='eo'){const ev=pct.filter((_,i)=>i%2===0).reduce((a,b)=>a+b,0);c.push({t:'even',w:ev,be:50},{t:'odd',w:100-ev,be:50})}
+ else if(strat==='rf'){const u=upPct(k,n);c.push({t:'rise',w:u,be:50},{t:'fall',w:100-u,be:50})}
+ else if(strat==='ou'){for(let b=0;b<9;b++)c.push({t:'over',b,w:pct.slice(b+1).reduce((a,x)=>a+x,0),be:(9-b)*10});for(let b=1;b<10;b++)c.push({t:'under',b,w:pct.slice(0,b).reduce((a,x)=>a+x,0),be:b*10})}
+ else{const mx=Math.max(...pct),mn=Math.min(...pct);c.push({t:'match',b:pct.indexOf(mx),w:mx,be:10},{t:'differ',b:pct.indexOf(mn),w:100-mn,be:90})}
+ c.forEach(x=>{x.k=x.k||k;x.edge=x.w-x.be;x.b=x.b??5});return c.sort((a,b)=>b.edge-a.edge)[0]}
+const sigTxt=s=>`${TT[s.t][0]}${HAS_B.includes(s.t)?' '+s.b:''}`;
+function tradeSignal(s){Object.assign(BOTS.main.c,{m:s.k,t:s.t,b:s.b,n:1,ct:'both',entry:'always'});if(s.t==='rise'||s.t==='fall')BOTS.main.c.n=5;BOTS.main.name='Signal: '+sigTxt(s);saveBots();toast(`Quick Bot set to ${sigTxt(s)} on ${M[s.k].n}. Review it, then press Run.`);nav('Quick Bot')}
+
+/* ---------- Signal AI ---------- */
+const SA={strat:'ou',watch:'off',n:3000,min:60,res:null,busy:false,watching:false,log:[]};
+const saLog=(tag,m)=>{SA.log.push(`[${tag}] ${m}`);if(SA.log.length>400)SA.log.shift()};
+TICKS.push((k,p)=>{if(page==='Signal AI'&&view==='app'&&Math.random()<.25)saLog('TICK',`${M[k].s} ${p.toFixed(M[k].d)} · last digit ${digit(k,p)}`)});
+async function saRun(btn){if(SA.busy)return;SA.busy=true;busy(btn,true,'Analysing…');SA.res=null;
+ const mk=SA.watch==='off'?Object.keys(M):[SA.watch];saLog('INFO',`Analysing ${mk.length} market${mk.length>1?'s':''} · ${SA.n} ticks each · strategy ${GR.find(g=>g[0]===SA.strat)[1]}`);
+ const all=[];for(const k of mk){await wait(mk.length>1?90:400);const s=bestFor(SA.strat,k,SA.n);all.push(s);saLog('SCAN',`${M[k].n}: best ${sigTxt(s)} · observed ${s.w.toFixed(1)}% · break-even ${s.be}% · edge ${s.edge>=0?'+':''}${s.edge.toFixed(1)}%`)}
+ all.sort((a,b)=>b.edge-a.edge);const top=all.filter(s=>s.w>=SA.min);SA.res={top:top[0]||null,list:all.slice(0,5),t:Date.now()};
+ saLog(top.length?'OK':'WARN',top.length?`Signal: ${sigTxt(top[0])} on ${M[top[0].k].n} (${top[0].w.toFixed(1)}%)`:`No contract reached ${SA.min}% observed win rate`);
+ SA.busy=false;busy(btn,false);render()}
+Object.assign(PG,{
+'Signal AI':{html:()=>`<div class="sai"><canvas id="sacv" aria-hidden="true"></canvas>
+ <div class="saw"><h2>Signal AI</h2>
+  <div class="sag"><label>Select Strategy<select id="sa-s">${opt([['ou','Over & Under'],['eo','Even & Odd'],['rf','Rise & Fall'],['md','Matches & Differs']],SA.strat)}</select></label>
+  <label>Watch Market<select id="sa-w"><option value="off">— Off (scan all) —</option>${mkOpts(SA.watch)}</select></label>
+  <label>Ticks<input id="sa-n" type="number" min="100" max="${HMAX}" step="100" value="${SA.n}"></label>
+  <label>Min Confidence %<input id="sa-c" type="number" min="10" max="99" step="1" value="${SA.min}"></label></div>
+  <div class="salt" id="salt">Latest Tick: --</div>
+  <div class="sab"><button class="btn sago" id="sa-go">Analyse</button><button class="btn saw2" id="sa-wt">Watch live</button></div>
+  <div class="sares" id="sares"></div>
+  <p class="sanote">Signals are observed frequencies from recent ticks. Deriv's synthetic indices are random, so past ticks do not predict the next one.</p></div></div>`,
+ init(){const rd=()=>{SA.strat=$('sa-s').value;SA.watch=$('sa-w').value;SA.n=Math.min(HMAX,Math.max(100,+$('sa-n').value||3000));SA.min=Math.min(99,Math.max(10,+$('sa-c').value||60))};
+  $('sacv').parentElement.onchange=rd;$('sa-go').onclick=e=>{rd();saRun(e.currentTarget)};
+  $('sa-wt').onclick=()=>{rd();SA.watching=!SA.watching;$('sa-wt').textContent=SA.watching?'Stop watching':'Watch live';saLog('INFO',SA.watching?'Live watch on: re-analysing every 10 seconds':'Live watch off');if(SA.watching)saRun($('sa-go'))};
+  $('sares').onclick=e=>{if(e.target.closest('#sa-tr')&&SA.res&&SA.res.top)tradeSignal(SA.res.top)};
+  saLog('INFO','Signal AI ready. Market feed: '+(live?'live Deriv ticks':'simulated (Deriv not connected)'));
+  const cv=$('sacv');let y=0;const draw=()=>{if(page!=='Signal AI'||!$('sacv'))return;const s=setup(cv);if(s){const{x,w,h}=s;x.fillStyle='#020a04';x.fillRect(0,0,w,h);x.font='15px "JetBrains Mono",Consolas,monospace';const lh=24,rows=Math.ceil(h/lh)+1,L=SA.log;
+    for(let r=0;r<rows;r++){let line='',i=r;while(line.length<w/8&&L.length){const t=L[(L.length-1-((i+Math.floor(y))%L.length)+L.length)%L.length];line+=t+'   ';i+=rows}x.fillStyle=/\[(WARN|ERR)/.test(line.slice(0,8))?'#c8a400':'#1fa83a';x.globalAlpha=.75;x.fillText(line,0,r*lh+16)}x.globalAlpha=1}
+   y+=.02;requestAnimationFrame(draw)};draw();
+  PG['Signal AI'].iv=setInterval(()=>{if(SA.watching&&!SA.busy&&page==='Signal AI')saRun($('sa-go'))},10000)},
+ leave(){clearInterval(PG['Signal AI'].iv);SA.watching=false},
+ tick(){const k=SA.watch==='off'?(SA.res&&SA.res.top?SA.res.top.k:'V100'):SA.watch,m=M[k];$('salt').innerHTML=`Latest Tick: <b>${m.p.toFixed(m.d)}</b> <small>${m.sh} · digit ${digit(k,m.p)}</small>`;
+  const r=SA.res,h=!r?'':r.top?`<div class="sasig"><small>Top signal · ${new Date(r.t).toLocaleTimeString()}</small><b>${sigTxt(r.top)} on ${M[r.top.k].n}</b><div class="sacf"><i style="width:${r.top.w}%"></i></div><span>Observed ${r.top.w.toFixed(1)}% · break-even ${r.top.be}% · edge ${r.top.edge>=0?'+':''}${r.top.edge.toFixed(1)}%</span><button class="btn bg" id="sa-tr">Trade this signal</button></div>`
+   :`<div class="sasig none"><b>No signal above ${SA.min}%</b><span>Best seen: ${sigTxt(r.list[0])} on ${M[r.list[0].k].n} at ${r.list[0].w.toFixed(1)}%. Lower Min Confidence or try another strategy.</span></div>`;
+  if($('sares').dataset.h!==h){$('sares').innerHTML=h;$('sares').dataset.h=h}}},
+
+/* ---------- Bulk Trader ---------- */
+'Bulk Trader':{st:{m:'V100',t:'eo',b:5,n:1000,ticks:1,s:.5,bulk:1,auto:false,th:60,rounds:5,done:0},
+ html:()=>{const S=PG['Bulk Trader'].st;return `<div class="bulk">
+ <div class="g2s">${LB('Market',`<select id="bk-m">${mkOpts(S.m)}</select>`)}${LB('Trade type',`<select id="bk-t">${opt(GR.map(g=>[g[0],g[1]]),S.t)}</select>`)}</div>
+ <div class="g2s">${LB('Number of ticks',`<input id="bk-n" type="number" min="50" max="${HMAX}" step="50" value="${S.n}">`)}<div id="bk-bw">${LB('Prediction',`<select id="bk-b">${opt(DG,S.b)}</select>`)}</div></div>
+ <div class="bkh"><div><small>CURRENT TICK</small><div class="bkp" id="bk-p"></div></div><button class="aisc" id="bk-ai">${ICO('M5 4h14v16H5zM9 8h6M9 12h6M9 16h3')}AI SCANNER</button></div>
+ <div class="dcs" id="bk-dc"></div><div class="eos" id="bk-eo"></div>
+ <div class="g3s">${LB('Ticks',`<input id="bk-tk" type="number" min="1" max="10" value="${S.ticks}">`)}${LB('Stake',`<input id="bk-s" type="number" min=".35" step=".01" value="${S.s}">`)}${LB('No. of bulk trades',`<input id="bk-bk" type="number" min="1" max="20" value="${S.bulk}">`)}</div>
+ <div class="bkat"><span id="bk-as"></span><button class="tbn" id="bk-at">${ICO('M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM12 2v3M12 19v3M2 12h3M19 12h3')}Auto trader</button></div>
+ <div class="bkb" id="bk-bb"></div><p class="qsum" id="bk-sum"></p></div>`},
+ init(){const S=PG['Bulk Trader'].st,rd=()=>{S.m=$('bk-m').value;S.n=Math.min(HMAX,Math.max(50,+$('bk-n').value||1000));S.b=+$('bk-b').value;S.ticks=Math.min(10,Math.max(1,+$('bk-tk').value||1));S.s=Math.max(.35,+$('bk-s').value||.5);S.bulk=Math.min(20,Math.max(1,+$('bk-bk').value||1))};
+  $('pg').onchange=e=>{PGH(e);if(e.target.id==='bk-t'){S.t=e.target.value;$('bk-bb').dataset.h=''}rd();render()};
+  $('bk-bb').onclick=e=>{const b=e.target.closest('[data-side]');if(!b)return;rd();PG['Bulk Trader'].buy(b.dataset.side)};
+  $('bk-ai').onclick=e=>{const btn=e.currentTarget;busy(btn,true,'Scanning…');setTimeout(()=>{busy(btn,false);const L=Object.keys(M).map(k=>bestFor(S.t,k,S.n)).sort((a,b)=>b.edge-a.edge);
+   const d=$('gd');d.innerHTML=`<h3>AI Scanner · ${GR.find(g=>g[0]===S.t)[1]}</h3><p>Best contract on each market over the last ${S.n} ticks, ranked by edge over the break-even rate.</p><div class="scl">${L.map(s=>`<button data-sc="${s.k}" data-t="${s.t}" data-b="${s.b}"><b>${M[s.k].n}</b><span>${sigTxt(s)}</span><span>${s.w.toFixed(1)}%</span><span class="${s.edge>=0?'up':'dn'}">${s.edge>=0?'+':''}${s.edge.toFixed(1)}%</span></button>`).join('')}</div><form method="dialog"><button class="btn bo full">Close</button></form>`;
+   d.showModal();d.onclick=ev=>{const x=ev.target.closest('[data-sc]');if(!x)return;S.m=x.dataset.sc;if(HAS_B.includes(x.dataset.t))S.b=+x.dataset.b;d.close();nav('Bulk Trader')}},700)};
+  $('bk-at').onclick=()=>{const d=$('gd');d.innerHTML=`<h3>Auto trader</h3><p>Buy automatically when one side reaches a share of the last ${S.n} ticks.</p>${LB('Buy when a side is at least (%)',`<input id="at-th" type="number" min="50" max="95" value="${S.th}">`)}${LB('Rounds (one bulk buy per round)',`<input id="at-r" type="number" min="1" max="100" value="${S.rounds}">`)}<div class="dlgb"><button class="btn bo" id="at-x">Cancel</button><button class="btn ${S.auto?'bd':'bg'}" id="at-go">${S.auto?'Stop auto trader':'Start auto trader'}</button></div>`;
+   d.showModal();$('at-x').onclick=()=>d.close();$('at-go').onclick=()=>{S.th=+$('at-th').value||60;S.rounds=+$('at-r').value||5;S.auto=!S.auto;S.done=0;d.close();toast(S.auto?'Bulk auto trader started':'Bulk auto trader stopped')}}},
+ buy(side){const S=this.st;let n=0;for(let i=0;i<S.bulk;i++)if(place({k:S.m,t:side,b:+S.b,s:+S.s,n:+S.ticks||1,src:'Bulk'}))n++;if(n)toast(`${n} ${TT[side][0]} contract${n>1?'s':''} ${DV.on()?'sent to Deriv':'placed'}`)},
+ sides(S){const{pct}=digitPct(S.m,S.n);if(S.t==='eo'){const e=pct.filter((_,i)=>i%2===0).reduce((a,b)=>a+b,0);return[['even',e],['odd',100-e]]}
+  if(S.t==='rf'){const u=upPct(S.m,S.n);return[['rise',u],['fall',100-u]]}
+  if(S.t==='ou')return[['over',pct.slice(S.b+1).reduce((a,x)=>a+x,0)],['under',pct.slice(0,S.b).reduce((a,x)=>a+x,0)]];
+  return[['match',pct[S.b]],['differ',100-pct[S.b]]]},
+ tick(){const S=this.st,m=M[S.m],{ds,pct}=digitPct(S.m,S.n),cd=digit(S.m,m.p),srt=[...pct].sort((a,b)=>b-a),col=v=>v===srt[0]?'#e5484d':v===srt[1]?'#2f6fe4':v===srt[2]?'#f28c28':v===srt[9]?'#22ab94':'';
+  $('bk-bw').hidden=!HAS_B.includes(SIDES[S.t][0]);$('bk-p').textContent=m.p.toFixed(m.d);
   $('bk-dc').innerHTML=pct.map((v,i)=>`<div class="dc${i===cd?' cur':''}"><span style="${col(v)?`border-color:${col(v)}`:''}">${i}</span><small>${v.toFixed(2)}%</small></div>`).join('');
   const sd=S.t==='rf'?H[S.m].slice(-13).slice(1).map((v,i,a)=>v>(i?a[i-1]:H[S.m].at(-13))?'R':'F'):ds.slice(-12).map(d=>S.t==='eo'?(d%2?'O':'E'):S.t==='ou'?(d>S.b?'O':d<S.b?'U':'='):(d===S.b?'M':'D'));
   $('bk-eo').innerHTML=sd.map(x=>`<span class="${'EROM'.includes(x)&&x!=='O'?'g':x==='O'&&S.t==='ou'?'g':'r'}">${x}</span>`).join('');
