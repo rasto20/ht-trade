@@ -326,45 +326,299 @@
 
 /* Dashboard bot import summary */
 .impl{margin:6px 0 10px;padding-left:20px;line-height:1.7;color:var(--ink)}
-.digit-stats {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 12px 8px;
-  margin: 8px 0;
+
+/* Manual Trader: collapsible take-profit group (invisible wrapper on desktop) */
+.mmb{display:none}.mmx{display:contents}
+
+/* ===== Phone layout: Bulk Trader & Manual Trader fit one screen ===== */
+@media(max-width:820px){
+ .nv button{padding:11px 10px}
+ .tick2>div{padding:6px 0}
+ .pg-bulk-trader,.pg-manual-trader{padding-top:8px}
+
+ /* ---- Bulk Trader ---- */
+ .bulk .fld{gap:3px;margin-bottom:7px}
+ .bulk .fl{font-size:10px;letter-spacing:.06em;line-height:1.15}
+ .bulk input,.bulk select{padding:8px 10px;font-size:16px;border-radius:8px}
+ .bulk .g2s,.bulk .g3s{gap:8px}
+ .bulk .g2s{grid-template-columns:1fr 1fr}
+ .bulk .g3s{grid-template-columns:1fr 1fr 1fr;align-items:end}
+ .bkh{margin:2px 0 8px}
+ .bkh small{padding-left:0;font-size:10px}
+ .bkp{font-size:30px;padding-left:0;line-height:1.1}
+ .aisc{padding:8px 12px;font-size:12px;letter-spacing:.06em}
+ .dcs{grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;margin-bottom:8px}
+ .dc{gap:2px}
+ .dc span{width:100%;max-width:34px;height:auto;aspect-ratio:1;font-size:13px;border-width:3px}
+ .dc small{font-size:8.5px;letter-spacing:-.02em}
+ .dc.cur:after{bottom:-5px;border-width:4px}
+ .eos{gap:3px;margin-bottom:10px;flex-wrap:nowrap}
+ .eos span{width:auto;flex:1;max-width:26px;height:20px;font-size:10px;border-radius:3px}
+ .bkat{margin:0 0 8px;gap:8px}.bkat span{font-size:12px}
+ .bkat .tbn{padding:6px 10px;font-size:13px}.bkat .tbn svg{width:15px;height:15px}
+ .bkx{padding:10px 12px;font-size:16px;gap:2px}.bkx span{font-size:17px}
+ .qsum{margin:8px 0 0;font-size:13px;line-height:1.4}
+
+ /* ---- Manual Trader: big chart, compact controls ---- */
+ .mt{display:flex;flex-direction:column;gap:8px;height:auto;min-height:0}
+ .mtc{height:clamp(250px,calc(100dvh - 468px),560px);flex:none}
+ #mtcv{inset:0 0 38px 0;height:calc(100% - 38px)}
+ .mkp{left:8px;top:8px;max-width:calc(100% - 120px)}
+ .mkb{padding:6px 10px;gap:8px;border-radius:8px;max-width:100%}
+ .mkb .mki{display:none}.mkb b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mkb small{font-size:10px}.mkb>svg{width:14px;height:14px;margin-left:6px}
+ .mkd{width:min(300px,calc(100vw - 40px));max-height:50dvh}
+ .ctl{left:auto;right:8px;top:8px;display:flex;gap:4px;padding:3px;border-radius:8px}
+ .ctl #ct-d{display:none}
+ .ic2,.ctl .ic2,.zm .ic2{width:28px;height:28px;font-size:16px;border-radius:6px}.ic2 svg{width:16px;height:16px}
+ .zm{left:auto;right:8px;top:46px;bottom:auto;display:flex;gap:4px}
+ /* digit rings sit in their own strip under the graph so they never cover it */
+ .mdb{left:8px;right:8px;bottom:5px;gap:3px;align-items:center}
+ .mb{max-width:28px}.mb b{font-size:11px}.mb.cur{transform:scale(1.1)}.mb.cur:after{bottom:-5px;margin-left:-3px;border-width:3px;border-top-width:0}
+ .mst{display:none}
+ .mtr{overflow:visible;padding:7px;gap:6px;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:dense;border-radius:10px}
+ .mtr>*{grid-column:1/-1;min-width:0}
+ .mtr>.tth{grid-column:auto}
+ .mtr>.tbx:has(.stk){grid-column:auto}
+ .mtr:has(.buy.r)>.buy{grid-column:auto}
+ .mtr>.tth:only-child,.mtr>.tpk{grid-column:1/-1}
+ .tth{padding:6px 10px;font-size:14px;gap:8px;border-radius:8px}.tth .tti svg{width:16px;height:16px}
+ .tbx{padding:6px 8px;border-radius:8px}.tbx>p{margin:0 0 4px;font-size:11px;text-align:left}
+ .gr button{padding:5px 0;font-size:14px}
+ .gr.dg{grid-template-columns:repeat(10,1fr)}.gr.dg button{padding:5px 0;font-size:13px}
+ .stk{gap:2px}.stk button{width:28px;font-size:20px}.stk input{font-size:15px;padding:4px}.stk span{font-size:11px}
+ .buy{padding:8px 12px;font-size:16px;border-radius:8px}.buy svg{width:18px;height:18px}.buy small{font-size:10px}
+ .tpk button{padding:10px}
+ .mmb{display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600}
+ .mmb i{font-style:normal;transition:transform .2s}.mmb[aria-expanded=true] i{transform:rotate(180deg)}
+ .mmx{display:none}.mmx.open{display:grid;grid-template-columns:1fr 1fr;gap:6px;grid-column:1/-1}
+ .mmx .tbx.row{flex-direction:column;align-items:stretch;gap:4px}.mmx .ck{font-size:12px}.mmx .tbx.row input[type=number]{padding:4px 8px;font-size:15px}
+ .mmx .kv2{display:grid;grid-template-columns:auto 1fr;align-content:center;gap:2px 8px;font-size:11px}.kv2 span{font-weight:600}.kv2 b{text-align:right;font-size:11px}
+ .mtp{order:3;padding:10px}.mph b{font-size:15px}.mtpl{max-height:180px}.nop svg{width:44px;height:44px}
 }
-.digit-stats .dg {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: 3px solid #c5c9d1;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
+@media(max-width:360px){.bkp{font-size:26px}.bulk input,.bulk select{font-size:15px;padding:7px 8px}.dc small{font-size:8px}}
+
+@media(max-width:820px){
+ .mtc{height:clamp(250px,calc(100dvh - 474px),560px)}
+ .mtr>.tbx:has(>.gr:not(.dg)){display:flex;align-items:center;gap:8px;padding:5px 8px}
+ .mtr>.tbx:has(>.gr:not(.dg))>p{margin:0;white-space:nowrap;flex:none}
+ .mtr>.tbx:has(>.gr:not(.dg))>.gr{flex:1}
+ .mmb{padding:5px 10px}
 }
-.digit-stats .dg-n {
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1.1;
-  color: #1a1d26;
+
+/* ===== Phone polish: every other page =====
+   Zero-specificity (:where) so the tuned Bulk / Manual Trader rules above always win. */
+@media(max-width:820px){
+ /* 1. Grids must be allowed to shrink (a plain 1fr track never goes below its widest child) */
+ :where(#pg) :is(.g2,.g2s,.rcg,.xtw,.bag,.qcols,.sag,.steps3,.rco,.rcm,.acg,.fbg,.pbg,.chw,.bbw,.stg,.cpg){grid-template-columns:minmax(0,1fr)}
+ :where(#pg) :is(.g2s){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ :where(#pg) :is(.pbm){grid-template-columns:repeat(3,minmax(0,1fr))}
+ :where(#pg) :is(.card,.pnl,.fld,.tbx,.qcol,.dp,section,article){min-width:0;max-width:100%}
+ :where(#pg) :is(input,select,textarea){min-width:0;max-width:100%}
+ :where(#pg) :is(table){max-width:100%}
+ :where(#pg) :is(h1,h2,h3,h4,p,small,b){overflow-wrap:break-word}
+
+ /* 2. Tighter cards, panels and headings */
+ :where(#pg) .card{padding:14px;border-radius:10px}
+ :where(#pg) .pnl h4{padding:11px 14px;font-size:14px}
+ :where(#pg) .pb2{padding:12px}
+ :where(#pg) :is(.g2){gap:12px}
+ :where(#pg) h1{font-size:24px}:where(#pg) h2{font-size:22px}
+
+ /* 3. Chip / tab rows scroll sideways in one line instead of wrapping into a block */
+ :where(#pg) :is(.chips,.subt,.xtabs,.tabs){flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-bottom:14px}
+ :where(#pg) :is(.chips,.subt,.xtabs,.tabs)::-webkit-scrollbar{display:none}
+ :where(#pg) :is(.chips,.subt,.xtabs,.tabs)>*{flex:none}
+ :where(#pg) .chips{gap:8px;padding-bottom:2px}
+ :where(#pg) .chips button{padding:7px 12px;font-size:14px}
+
+ /* 4. Free Bots / Premium Bots: compact cards */
+ .fbw .srch.big{margin-bottom:12px}.fbw .srch input{font-size:16px}
+ .fbg{gap:12px}
+ .fb{padding:14px 16px;min-height:0;gap:2px;border-width:2px}
+ .fb h3{font-size:17px;margin:0 0 4px;padding-right:64px}.fb p{font-size:13px;line-height:1.4;margin:0 0 6px}.fb small{font-size:11px;line-height:1.35}
+ .fb .rib{transform:scale(.8);transform-origin:top right}
+ .fb .btn{align-self:flex-start;padding:8px 14px;font-size:14px;margin-top:8px}
+ .pbg{gap:12px}.pbc{padding:14px;gap:10px}.pbh h3{font-size:17px}.pbc p{font-size:13px;line-height:1.45}.pbm span{padding:6px 8px}.pbm b{font-size:12.5px}.pbm small{font-size:10.5px}
+
+ /* 5. Quick Bot toolbar: 2 x 2 buttons, then Run beside the live price */
+ .qbt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:14px}
+ .qbt .btn,.qbt .tbn,.qbt button{justify-content:center;padding:8px 10px;font-size:13px;white-space:nowrap}
+ .qbt .qpx{margin:0;text-align:right;padding:6px 12px}.qbt .qpx b{font-size:18px}
+ .qsum{font-size:15px;margin-top:12px}
+
+ /* 6. Signals */
+ .sgg{grid-template-columns:minmax(0,1fr);gap:10px}
+ .sgc{padding:12px;gap:6px}.sgc h3{font-size:18px}.sgc .btn{justify-self:stretch;text-align:center}
+ .sgk{font-size:12px;gap:6px}
+
+ /* 7. Risk Calculator */
+ .rch{padding:16px;gap:12px}.rch h1{font-size:24px}.rch p{font-size:14px}
+ .rcw{gap:12px}
+
+ /* 8. Dashboard: shorter tiles */
+ .tile{min-height:128px;width:auto}.tile i{width:48px;height:48px}.wel h2{font-size:24px}
 }
-.digit-stats .dg-p {
-  font-size: 10px;
-  color: #6b7280;
-  margin-top: 2px;
+@media(max-width:820px){
+ /* Analysis Tools digit rings: size from the column, not a fixed 60px */
+ .ar span{width:100%;max-width:58px;height:auto;aspect-ratio:1;font-size:16px}
+ .arings{gap:6px}
+ /* Risk Calculator quick-amount buttons */
+ .rcq{flex-wrap:wrap}
+ .rcq button{flex:1 0 56px}
 }
-.digit-stats .dg.on {
-  border-color: #00a8e8;
-  box-shadow: 0 0 0 2px rgba(0, 168, 232, 0.25);
+@media(max-width:820px){
+ .xtt{display:block;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+ .xtt td,.xtt th{padding:5px 7px;font-size:12px;white-space:nowrap}
 }
-.digit-stats .dg.cold .dg-p {
-  color: #e53935;
+@media(max-width:820px){.ptab,.atc,.atb{overflow-x:auto;max-width:100%}.ptab table{font-size:12px}.ptab td,.ptab th{padding:5px 6px}}
+@media(max-width:820px){
+ /* corner ribbon becomes a small pill so it never covers the bot description */
+ .fb .rib{top:12px;right:12px;width:auto;transform:none;padding:3px 9px;border-radius:999px;font-size:10px;letter-spacing:.08em}
+ .fb h3{padding-right:78px}
 }
-.digit-stats .dg.hot .dg-p {
-  color: #00a86b;
+
+@media(max-width:820px){
+ .ig span{flex:none;white-space:nowrap;padding:0 10px;font-size:13px}
+ .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;justify-content:stretch}
+ .tile{width:auto;min-height:118px;padding:12px 8px}
+}
+@media(max-width:820px){
+ /* Signal AI: pairs of fields, tighter terminal panel */
+ .sai{min-height:0}.saw{width:calc(100% - 16px);margin:8px 0;padding:14px 14px 16px;border-width:2px}
+ .saw h2{font-size:22px;margin-bottom:12px}
+ .sai .sag{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 12px}.sag label{font-size:13px;gap:4px}
+ .sag select,.sag input{padding:8px 6px;font-size:14px}
+ .sago{font-size:16px;padding:11px 20px}.sab{flex-wrap:wrap}
+ /* Copy Trading header, Reports stats */
+ .cph h1{font-size:24px;margin:6px 0}.cph p{font-size:15px}.cpw{gap:14px}.cpa{padding:14px;gap:14px 22px}
+ .rcq button{flex:1 0 28%}
+ .ath .tbn{flex:1 1 30%;justify-content:center}
+}
+@media(max-width:820px){
+ /* Bot Builder: blocks stack in one column and scroll with the page instead of living on a pan-and-zoom canvas */
+ .ws{overflow:visible;min-height:0;flex:none;background-image:none;border-radius:10px}
+ .wsi{width:100%!important;height:auto!important;transform:none!important;display:flex;flex-direction:column;gap:12px;padding:10px}
+ .blk{position:relative;left:auto!important;top:auto!important;min-width:0;max-width:none;width:100%}
+ .blk *{max-width:100%}
+ .blk :is(select,input){min-width:0}
+ .blk .bh{padding:10px 12px}
+ .bmenu{max-height:240px}
+}
+@media(max-width:820px){
+ /* the delete bin becomes a normal row under the blocks instead of floating over them */
+ .ws{display:flex;flex-direction:column}
+ .bin{position:static;align-self:flex-end;width:48px;height:48px;margin:0 12px 10px}.bin svg{width:34px;height:34px}
+}
+
+/* ===== Dense phone layer (v2) =====
+   Same compact density as Bulk / Manual Trader, for every other page.
+   P = any page except the two trader pages (they keep their own tuned rules). */
+@media(max-width:820px){
+ /* ---------- type scale, forms, buttons ---------- */
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader){font-size:14px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) h1{font-size:21px;line-height:1.2;margin:0 0 4px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) h2{font-size:18px;line-height:1.25}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) h3{font-size:15px;line-height:1.25}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) p{font-size:13.5px;line-height:1.45}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .pghead{margin-bottom:10px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .fld{gap:3px;margin-bottom:8px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .fl,#pg:not(.pg-bulk-trader):not(.pg-manual-trader) .fld>label{font-size:11.5px;line-height:1.2}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){padding:7px 10px;font-size:16px;border-radius:8px;min-height:0}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .ig span{padding:0 8px;font-size:12px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) :is(.btn,.tbn){padding:7px 12px;font-size:13px;border-radius:8px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .tbn svg{width:15px;height:15px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .card{padding:12px;border-radius:10px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .pnl h4{padding:9px 12px;font-size:12.5px;gap:8px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .pnl h4 svg{width:15px;height:15px}
+ #pg:not(.pg-bulk-trader):not(.pg-manual-trader) .pb2{padding:10px}
+
+ /* ---------- Dashboard ---------- */
+ .dash{padding:14px 12px 20px;margin:-8px -12px 0;gap:14px;min-height:0}
+ .hello{font-size:24px;margin:0 0 4px}
+ .dsub{font-size:13.5px;line-height:1.45;margin:0 0 12px}
+ .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ .tile{min-height:86px;padding:10px 4px 8px;gap:6px;font-size:11.5px;line-height:1.25;border-radius:10px;justify-content:center}
+ .tile i{width:40px;height:40px;border-radius:9px}.tile i svg{width:23px;height:23px}
+ .dstrip{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+ .dstrip span{min-width:0;padding:7px 10px;border-radius:8px}.dstrip small{font-size:11px}.dstrip b{font-size:14px;overflow-wrap:anywhere}
+ .dside{gap:10px}
+ .dside .card{padding:12px 14px;border-radius:12px}
+ .wel{padding-top:20px!important}.wel:before{top:9px;height:3px}
+ .wico{width:34px;height:34px;margin:0 auto 8px}.wico svg{width:18px;height:18px}
+ .wel h2{font-size:18px;margin:0 0 4px}.wel p{font-size:13.5px;line-height:1.45}
+ .gs,.qa{gap:10px}.gico{width:26px;height:26px}.gico svg{width:20px;height:20px}
+ .gs h3,.qa h3{font-size:15px;margin:0 0 4px}.gs p{font-size:13px;line-height:1.4}
+ .qa button{font-size:13.5px;padding:2px 0;line-height:1.35}
+
+ /* ---------- Quick Bot ---------- */
+ .pg-quick-bot .dp .pb2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 10px;align-items:end}
+ .pg-quick-bot .dp .pb2>*{grid-column:1/-1;margin:0}
+ .pg-quick-bot .dp .pb2>.fld:has(.ig),.pg-quick-bot .dp .pb2>.fld.row{grid-column:auto}
+ .pg-quick-bot .dp .pb2>.fld.row:has(.mrt),.pg-quick-bot .dp .pb2>.fld:has(.g2s){grid-column:1/-1}
+ .pg-quick-bot .dp{border-radius:10px}
+ .pg-quick-bot .qcol{gap:10px}.pg-quick-bot .qcols{gap:10px}
+ .pg-quick-bot .fld.row{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--soft)}
+ .pg-quick-bot .fld.row .fl{margin:0}
+ .pg-quick-bot .qpx b{font-size:16px}
+
+ /* ---------- Bot Builder ---------- */
+ .bbw{gap:10px;padding-top:10px}
+ .bbl{display:grid;gap:8px}
+ .qsb{font-size:15px;padding:11px;border-radius:9px}
+ .bmh{font-size:15px;padding:11px;gap:12px}.bmh svg{width:18px;height:18px}
+ .bmenu{max-height:none}
+ #bmb .srch{margin:8px}
+ .bmi button{font-size:14.5px;padding:8px 12px;gap:10px}.bmi button>svg:first-child{width:32px;height:32px;padding:7px}
+ .bbt{gap:6px;padding:8px;flex-wrap:wrap}.bbt button{width:36px;height:36px;border-radius:8px}.bbt button svg{width:18px;height:18px}
+ .bbs{font-size:12.5px;line-height:1.4}
+ .blk{font-size:12.5px}.blk .bh{font-size:13px;padding:8px 10px}
+
+ /* ---------- Free Bots ---------- */
+ .fbw .srch.big{margin-bottom:10px}.fbw .srch input{font-size:16px;padding:9px 6px}
+ .fbg{gap:8px}
+ .fb{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"t t" "d b" "m m";align-items:center;gap:2px 10px;padding:10px 12px;border-width:1.5px;border-radius:10px}
+ .fb h3{grid-area:t;font-size:15px;margin:0;padding-right:70px;line-height:1.25}
+ .fb p{grid-area:d;font-size:12.5px;line-height:1.35;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .fb small{grid-area:m;font-size:10.5px;line-height:1.3;margin-top:3px;opacity:.85}
+ .fb .btn{grid-area:b;margin:0;padding:6px 12px;font-size:12.5px;align-self:center;white-space:nowrap}
+ .fb .rib{top:9px;right:9px;font-size:9px;padding:2px 8px}
+ .chips{gap:6px}.chips button{padding:6px 11px;font-size:13px}
+
+ /* ---------- Premium Bots ---------- */
+ .pbg{gap:8px}
+ .pbc{padding:10px 12px;gap:8px;border-radius:10px}
+ .pbh{gap:10px}.pbh h3{font-size:15px;margin:0}.pbh>svg,.pbh .pbi{width:30px;height:30px}
+ .pbh>span:first-child{width:34px;height:34px;border-radius:8px}.pbh>span:first-child svg{width:18px;height:18px}
+ .pbc p{font-size:12.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+ .pbm{gap:6px}.pbm span{padding:5px 7px;border-radius:7px}.pbm small{font-size:10px}.pbm b{font-size:12px}
+ .pbc .btn{align-self:stretch;text-align:center;justify-content:center;padding:7px 10px}
+
+ /* ---------- Analysis Tools ---------- */
+ .pg-analysis-tools .subt{padding:6px 10px;margin:-8px -12px 10px}.subt button{padding:7px 12px;font-size:13px}
+ .pg-analysis-tools .atw{gap:10px}
+ .pg-analysis-tools .atc,.pg-analysis-tools .atb{padding:0}
+ .arings{gap:4px}.ar span{max-width:52px;font-size:14px}
+ .pg-analysis-tools .qad{gap:4px}
+ .xtt td,.xtt th{padding:4px 6px;font-size:11.5px}
+
+ /* ---------- Risk Calculator ---------- */
+ .rch{padding:12px 14px;gap:8px;border-radius:8px}.rch h1{font-size:20px;margin:2px 0 4px}.rch p{font-size:13px}.rch small{font-size:10px}
+ .rcw{gap:10px}
+ .rcs,.rcp{padding:12px;border-top-width:3px}
+ .rcs h3,.rcp h3{margin:-2px 0 8px;font-size:14px}
+ .rccap input{font-size:18px;padding:8px 10px}.rccap span{padding:0 10px;font-size:12px}
+ .rcq{margin:8px 0 10px;gap:5px}.rcq button{padding:5px 8px;font-size:12px}
+ .rco{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px}
+ .rco button{padding:8px 8px;gap:1px;font-size:12.5px;line-height:1.2}.rco small{font-size:10.5px;line-height:1.25}
+ .rsl{padding:8px 0}.rsl label{font-size:13px;margin-bottom:4px}
+ .rcrec{padding:12px 14px}.rcrec b{font-size:28px}
+ .rcsc{padding:10px;gap:10px;margin:8px 0}.ringv{width:44px;height:44px}
+ .rcm{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.rcm div{padding:8px}.rcm b{font-size:14px}.rcm small{font-size:10px}
+ .rcp h4{margin:12px 0 6px;font-size:14px}
+ .rct th{font-size:11px}.rct td{font-size:12.5px}
+ .rch2 li{padding:8px 10px;font-size:13px;gap:10px}
+}
+@media(max-width:820px){
+ .pg-analysis-tools .g2s:has(.ptab){grid-template-columns:minmax(0,1fr)}
+ .pg-analysis-tools .ptab td,.pg-analysis-tools .ptab th{font-size:11.5px}
 }
