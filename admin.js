@@ -1,8 +1,7 @@
 /* Admin mode – ?admin=1
-   Rasto (flag, bal − offset, min 0, id DOT927.ras, no Reset)
+   Rasto (flag, bal − offset, id DOT927.ras, no Reset)
    Demo (coin, full bal, real id, Reset)
-   Same Deriv virtual account. Switch stops bots. No auto dvLogin.
-   All trades blocked on Rasto when balance is insufficient. */
+   Same Deriv virtual account. Switch stops bots. No auto dvLogin. */
 (function () {
   const SIDE_LEFT = "left";
   const SIDE_RIGHT = "right";
@@ -78,47 +77,12 @@
     return null;
   }
 
-  // Rasto balance (never below 0)
-  function rastoBal() {
-    var raw = rawDemoBal();
-    if (raw == null) return null;
-    return Math.max(0, raw - RASTO_A_OFFSET);
-  }
-
-  window.htRastoBal = rastoBal;
-
-  // true only when Rasto has enough funds for this stake
-  window.htHasRastoFunds = function (stake) {
-    if (!window.HT_ADMIN || window.HT_ADMIN_SIDE !== SIDE_LEFT) return true;
-    var b = rastoBal();
-    if (b == null) return false;
-    if (b <= 0) return false;
-    if (stake != null && isFinite(+stake) && +stake > b) return false;
-    return true;
-  };
-
-  // Call before any buy / bot trade. Returns false = blocked.
-  window.htCanTrade = function (stake) {
-    if (!window.HT_ADMIN) return true;
-    if (window.HT_ADMIN_SIDE !== SIDE_LEFT) return true;
-
-    if (!window.htHasRastoFunds(stake)) {
-      if (typeof toast === "function") {
-        toast("Insufficient balance");
-      }
-      return false;
-    }
-    return true;
-  };
-
   function balTxtAdmin() {
     var raw = rawDemoBal();
     if (raw == null) return "—";
 
     var side = window.HT_ADMIN_SIDE || SIDE_LEFT;
-    if (side === SIDE_LEFT) {
-      raw = Math.max(0, raw - RASTO_A_OFFSET); // never below 0
-    }
+    if (side === SIDE_LEFT) raw = raw - RASTO_A_OFFSET;
 
     var cur =
       typeof DV !== "undefined" && DV.cur ? DV.cur : "USD";
@@ -156,7 +120,7 @@
     if (side === SIDE_LEFT) {
       ak.className = "flag-circle";
       ak.innerHTML = usdFlagHtml();
-      ak.title = "flag";
+      ak.title ="flag";
     } else {
       ak.className = "coin";
       ak.innerHTML =
@@ -318,28 +282,14 @@
 
   window.htAdminSetSide = setAdminSide;
 
-  // Bots cannot run on Rasto if balance is insufficient
   window.htCanRunBot = function () {
     if (!window.HT_ADMIN) {
       if (typeof DV === "undefined") return true;
       return !DV.on() || !!DV.ok;
     }
     if (!demoAcct()) return false;
-    if (!(typeof DV !== "undefined" && DV.ok)) return false;
-
-    // On Rasto: block if no funds
-    if (window.HT_ADMIN_SIDE === SIDE_LEFT) {
-      var b = rastoBal();
-      if (b == null || b <= 0) {
-        if (typeof toast === "function") toast("Insufficient balance");
-        return false;
-      }
-    }
-    return true;
+    return !!(typeof DV !== "undefined" && DV.ok);
   };
-
-  // Block trade helpers (call these before any buy)
-  // Example: if (!htCanTrade(stake)) return;
 
   document.addEventListener(
     "click",
@@ -418,32 +368,61 @@
     };
   });
 
-  // Try to wrap common buy / trade entry points if they exist
-  ["buy", "dvBuy", "placeTrade", "doBuy", "runBuy"].forEach(function (fnName) {
-    hook(fnName, function (orig) {
-      window[fnName] = function () {
-        var stake = arguments[0];
-        // try to find stake from common argument shapes
-        if (stake && typeof stake === "object") {
-          stake = stake.amount || stake.stake || stake.price || null;
-        }
-        if (!window.htCanTrade(stake)) return;
-        return orig.apply(this, arguments);
-      };
-    });
-  });
-
   setInterval(function () {
     if (!window.HT_ADMIN) return;
     renameTabs();
     adminHdr();
+  }, 1000);
 
-    // Auto-stop bots if Rasto balance hits 0 while running
+  setTimeout(function () {
+    renameTabs();
+    window.HT_ADMIN_SIDE =
+      localStorage.getItem("ht_admin_side") || SIDE_LEFT;
+    adminHdr();
+  }, 700);
+
+  setTimeout(function () {
+    if (typeof DV !== "undefined" && DV.on() && demoAcct()) {
+      if (!DV.ok) {
+        adminConnectOnce = false;
+        ensureDemoConnected();
+      }
+    }
+    adminHdr();
+  }, 2500);
+
+  var tries = 0;
+  var iv = setInterval(function () {
+    if (!window.HT_ADMIN) {
+      clearInterval(iv);
+      return;
+    }
+    tries++;
+    adminHdr();
     if (
-      window.HT_ADMIN_SIDE === SIDE_LEFT &&
-      typeof BOTS !== "undefined"
+      demoAcct() &&
+      typeof DV !== "undefined" &&
+      !DV.ok &&
+      !adminConnectOnce
     ) {
-      var b = rastoBal();
-      if (b != null && b <= 0) {
-        var anyOn = false;
-        for (var id in 
+      ensureDemoConnected();
+    }
+    if (demoAcct() && typeof DV !== "undefined" && DV.ok) clearInterval(iv);
+    if (tries > 10) clearInterval(iv);
+  }, 1000);
+
+  let lastA = 0;
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "a" || e.key === "A") {
+      const now = Date.now();
+      if (now - lastA < 400) {
+        localStorage.removeItem("ht_admin");
+        localStorage.removeItem("ht_admin_side");
+        window.HT_ADMIN = false;
+        alert("Admin mode off. Refresh the page.");
+      }
+      lastA = now;
+    }
+  });
+})();
+ 
