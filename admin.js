@@ -5,9 +5,9 @@
 (function () {
   const SIDE_LEFT = "left";
   const SIDE_RIGHT = "right";
-  const LABEL = { left: "Rasto", right: "Demo" };
+  const LABEL = { left: "Real", right: "Demo" };
   const RASTO_A_OFFSET = -9504.7;
-  const RASTO_FAKE_ID = "DOT927.ras";
+  const RASTO_FAKE_ID = "ROT5432541";
 
   const COIN_SVG =
     '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="currentColor"/><path d="M11.5 9.5h5a6.5 6.5 0 0 1 0 13h-5zM8 13.5h7M8 18.5h7" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
