@@ -30,7 +30,7 @@ function drawChart(cv,o){const s=setup(cv);if(!s)return;const{x,w,h}=s,k=o.k,m=M
  const N=pts.length,bx=i=>W*.86*(i/(Math.max(N-1,1)));  /* leave space on the right like a trading chart */
  /* time axis */
  const ts=TS[k]||[],tsl=ts.slice(-N);x.fillStyle=lab;x.textAlign='center';
- for(let i=0;i<6;i++){const j=Math.round(i*(N-1)/5),t=o.type==='candle'?pts[j]&&pts[j].t:tsl[j];if(!t)continue;const X=bx(j);x.strokeStyle=grid;x.beginPath();x.moveTo(X,0);x.lineTo(X,Hh);x.stroke();x.fillText(hhmm(t),Math.min(Math.max(X,28),W-28),Hh+14)}
+ const NL=Math.max(2,Math.min(6,Math.floor(W/84)));for(let i=0;i<NL;i++){const j=Math.round(i*(N-1)/(NL-1)),t=o.type==='candle'?pts[j]&&pts[j].t:tsl[j];if(!t)continue;const X=bx(j);x.strokeStyle=grid;x.beginPath();x.moveTo(X,0);x.lineTo(X,Hh);x.stroke();x.fillText(hhmm(t),Math.min(Math.max(X,28),W-28),Hh+14)}
  x.textAlign='left';
  /* accumulator band */
  if(o.band){const y1=py(o.band[1]),y2=py(o.band[0]),X0=bx(N-1);x.fillStyle='rgba(47,111,228,.10)';x.fillRect(X0,y1,W-X0,y2-y1);x.strokeStyle='#2f6fe4';x.lineWidth=1.2;
