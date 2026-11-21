@@ -147,11 +147,12 @@ Object.assign(PG,{
   if($('mst').dataset.h!==st){$('mst').innerHTML=st;$('mst').dataset.h=st}}},
 
 /* ---------- Copy Trading ---------- */
-'Copy Trading': {
-  html: () => `<div class="cpw"><div class="cph"><div><h1>Copy trading</h1><p>Add a Deriv API token with Trade permission, or send that token to the trader so they can add it for you.</p></div>
+/* Token = enroll/start/stop. Trades run in the follower browser (no server→Deriv). */
+"Copy Trading": {
+  html: () => `<div class="cpw"><div class="cph"><div><h1>Copy trading</h1><p>Add a Deriv API token with Trade permission. Keep this page open and logged in to receive copies in your browser.</p></div>
  <div class="cpa"><span><small>ACCOUNT</small><b id="cp-id"></b></span><span><small>BALANCE</small><b id="cp-bal"></b></span><span><small>ROLE</small><b id="cp-role"></b></span></div></div>
  <div class="card cpc"><div class="ch"><b>API token</b><a href="https://app.deriv.com/account/api-token" target="_blank" rel="noopener">Create on Deriv</a></div>
-  <div class="steps3"><div><i>1</i>Create a token with the Trade scope.</div><div><i>2</i>Paste it here, or send it to the trader to add for you.</div><div><i>3</i>The master account's trades are copied automatically.</div></div>
+  <div class="steps3"><div><i>1</i>Create a token with the Trade scope.</div><div><i>2</i>Paste it here and Save.</div><div><i>3</i>Start copying and stay logged in on this tab.</div></div>
   ${LB(
     "Deriv API token",
     `<div class="tokrow"><input id="cpt" type="password" placeholder="Paste token" autocomplete="off" spellcheck="false"><button class="btn sv" id="cpsv">Save</button><button class="btn bo" id="cpsy">${ICO(
@@ -163,21 +164,32 @@ Object.assign(PG,{
   )}How to create a token</button>
   <ol class="howto" id="howto" hidden><li>Open Deriv → Account settings → API token.</li><li>Tick <b>Read</b> and <b>Trade</b>, name it (for example "HT copy"), and create it.</li><li>Copy the token and paste it above, then press Save.</li></ol></div>
  <div class="card cpc"><div class="ch"><b>Your enrollment</b><span class="pill2" id="cp-st">Not set</span></div><div class="cpe"><small>Account</small><b class="mono" id="cp-acc">Not enrolled</b></div>
-  <p class="cpn" id="cp-n">Enrolled accounts on this site: 0</p><p class="cpn">The token is stored securely and used only to place copy trades. It is not shown again after you save.</p>
+  <p class="cpn" id="cp-n">Enrolled accounts on this site: 0</p><p class="cpn">Token marks you as a follower. Copy trades are placed in this browser while you are logged in to Deriv.</p>
   <div class="cpbtns" id="cp-ctl" hidden><button class="btn bg" id="cp-start">Start copying</button><button class="btn bd" id="cp-stop">Stop copying</button></div></div></div>`,
 
   init() {
-    const api = (p, o = {}) => {
+    const api = (p, o) => {
+      o = o || {};
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 15000);
-      return fetch(CFG.API_BASE + p, {
+      const timer = setTimeout(function () {
+        ctrl.abort();
+      }, 15000);
+      const base =
+        typeof CFG !== "undefined" && CFG.API_BASE != null ? CFG.API_BASE : "";
+      return fetch(base + p, {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         signal: ctrl.signal,
+        method: o.method || "GET",
+        body: o.body,
         ...o
       })
-        .then((r) => (r.ok ? r.json() : Promise.reject(r)))
-        .finally(() => clearTimeout(timer));
+        .then(function (r) {
+          return r.ok ? r.json() : Promise.reject(r);
+        })
+        .finally(function () {
+          clearTimeout(timer);
+        });
     };
 
     const getToken = () => localStorage.getItem("ht_copy_token") || "";
@@ -188,34 +200,34 @@ Object.assign(PG,{
 
     const show = (d) => {
       CP.d = d || {};
-      render();
+      if (typeof render === "function") render();
     };
 
+    // "" is valid on Vercel (same origin)
     const need = () => {
-      if (!CFG.API_BASE) {
-        toast(
-          "Copy trading needs the HT TRADES server. Set API_BASE in js/config.js."
-        );
+      if (typeof CFG === "undefined" || CFG.API_BASE === undefined) {
+        toast('Set API_BASE in config.js (use "" on Vercel).');
         return true;
       }
+      return false;
     };
 
     const resetBtn = (btn, label) => {
       if (!btn) return;
-      busy(btn, false);
+      if (typeof busy === "function") busy(btn, false);
       btn.disabled = false;
       btn.textContent = label;
     };
 
-    $("cphow").onclick = () => ($("howto").hidden = !$("howto").hidden);
+    $("cphow").onclick = () => {
+      $("howto").hidden = !$("howto").hidden;
+    };
 
-    // Save / Enroll
     $("cpsv").onclick = async (e) => {
       const t = $("cpt").value.trim();
       if (!/^[\w-]{8,}$/.test(t))
         return toast("Paste a valid Deriv API token first.");
       if (need()) return;
-
       const b = e.currentTarget;
       busy(b, true, "Saving");
       try {
@@ -230,35 +242,33 @@ Object.assign(PG,{
       } catch (x) {
         toast(
           x && x.name === "AbortError"
-            ? "Save timed out. Check API_BASE and the server."
-            : "Could not save the token. Check it has Trade scope."
+            ? "Save timed out. Check the server."
+            : "Could not save the token."
         );
       } finally {
         resetBtn(b, "Save");
       }
     };
 
-    // Sync
     $("cpsy").onclick = async (e) => {
       if (need()) return;
       const token = getToken();
-      if (!token)
-        return toast("No token saved yet. Paste and Save a token first.");
-
+      if (!token) return toast("No token saved yet.");
       const b = e.currentTarget;
       busy(b, true, "Syncing");
       try {
-        show(await api(`/copy/status?token=${encodeURIComponent(token)}`));
+        show(
+          await api("/copy/status?token=" + encodeURIComponent(token))
+        );
         toast("Enrollment synced");
       } catch (x) {
         toast(
           x && x.name === "AbortError"
-            ? "Sync timed out. Check the copy trading server."
+            ? "Sync timed out."
             : "Could not reach the copy trading server."
         );
       } finally {
         resetBtn(b, "Sync");
-        // restore icon+text if your busy() wiped the SVG
         if (b && !b.querySelector("svg")) {
           b.innerHTML =
             ICO(
@@ -268,12 +278,10 @@ Object.assign(PG,{
       }
     };
 
-    // Start — always clear "Starting" via finally
     $("cp-start").onclick = async (e) => {
       if (need()) return;
       const token = getToken();
       if (!token) return toast("No token saved yet.");
-
       const btn = e.currentTarget;
       if (btn.dataset.busy === "1") return;
       btn.dataset.busy = "1";
@@ -281,17 +289,14 @@ Object.assign(PG,{
       try {
         const res = await api("/copy/start", {
           method: "POST",
-          body: JSON.stringify({ token })
+          body: JSON.stringify({ token: token })
         });
         show(res);
-        if (res && res.active) toast("Copying started");
-        else if (res && res.enrolled)
-          toast("Enrolled — waiting for master trades");
-        else toast("Start response received");
+        toast(res && res.active ? "Copying started" : "Start response received");
       } catch (x) {
         toast(
           x && x.name === "AbortError"
-            ? "Start timed out. Server may be down or API_BASE is wrong."
+            ? "Start timed out."
             : "Could not start copying."
         );
       } finally {
@@ -300,12 +305,10 @@ Object.assign(PG,{
       }
     };
 
-    // Stop — always clear "Stopping" via finally
     $("cp-stop").onclick = async (e) => {
       if (need()) return;
       const token = getToken();
       if (!token) return toast("No token saved yet.");
-
       const btn = e.currentTarget;
       if (btn.dataset.busy === "1") return;
       btn.dataset.busy = "1";
@@ -314,14 +317,14 @@ Object.assign(PG,{
         show(
           await api("/copy/stop", {
             method: "POST",
-            body: JSON.stringify({ token })
+            body: JSON.stringify({ token: token })
           })
         );
         toast("Copying stopped");
       } catch (x) {
         toast(
           x && x.name === "AbortError"
-            ? "Stop timed out. Check the copy trading server."
+            ? "Stop timed out."
             : "Could not stop copying."
         );
       } finally {
@@ -330,14 +333,66 @@ Object.assign(PG,{
       }
     };
 
-    // Auto status on load
-    if (CFG.API_BASE) {
-      const token = getToken();
-      if (token) {
-        api(`/copy/status?token=${encodeURIComponent(token)}`)
-          .then(show)
-          .catch(() => {});
-      }
+    // Status on load
+    const token0 = getToken();
+    if (token0 && typeof CFG !== "undefined" && CFG.API_BASE !== undefined) {
+      api("/copy/status?token=" + encodeURIComponent(token0))
+        .then(show)
+        .catch(function () {});
+    }
+
+    // Browser pull: execute master signals locally (needs DV.ready)
+    if (!window._htCopyPull) {
+      window._htCopyPull = true;
+      var since = Date.now() - 3000;
+      var seen = {};
+      setInterval(async function () {
+        var token = getToken();
+        if (!token || typeof CFG === "undefined" || CFG.API_BASE === undefined)
+          return;
+        if (typeof DV === "undefined" || !DV.ready || !DV.ready()) return;
+        try {
+          var base = CFG.API_BASE || "";
+          var r = await fetch(
+            base +
+              "/copy/pull?token=" +
+              encodeURIComponent(token) +
+              "&since=" +
+              since
+          );
+          if (!r.ok) return;
+          var j = await r.json();
+          if (!j.active || !j.signals || !j.signals.length) return;
+          for (var i = j.signals.length - 1; i >= 0; i--) {
+            var s = j.signals[i];
+            if (seen[s.id]) continue;
+            seen[s.id] = 1;
+            since = Math.max(since, s.t || 0);
+            var tr = s.trade || {};
+            if (tr.k && tr.t && typeof place === "function") {
+              place({
+                k: tr.k,
+                t: tr.t,
+                b: tr.b,
+                n: tr.n || tr.duration || 1,
+                s: tr.s || tr.amount || 0.35,
+                src: "Copy"
+              });
+              if (typeof toast === "function") toast("Copy trade placed");
+            } else if (tr.k && typeof DV.buy === "function") {
+              DV.buy({
+                k: tr.k,
+                t: tr.t || "rise",
+                b: tr.b,
+                n: tr.n || 1,
+                s: tr.amount || tr.s || 0.35,
+                src: "Copy"
+              });
+              if (typeof toast === "function") toast("Copy trade placed");
+            }
+          }
+        } catch (e) {}
+      }, 2000);
     }
   },
 
@@ -345,17 +400,14 @@ Object.assign(PG,{
     const d = CP.d || {};
     const onRasto =
       window.HT_ADMIN &&
-      (window.HT_ADMIN_SIDE === "left" ||
-        window.HT_ADMIN_SIDE === "real");
+      (window.HT_ADMIN_SIDE === "left" || window.HT_ADMIN_SIDE === "real");
 
-    // ACCOUNT
     $("cp-id").textContent = onRasto
       ? "DOT977.RAS"
       : typeof demoId === "function"
         ? demoId()
         : (DV && DV.id) || "—";
 
-    // BALANCE
     if (onRasto && typeof DV !== "undefined" && DV.bal != null) {
       const shown = +DV.bal - 9504.7;
       $("cp-bal").textContent =
@@ -366,7 +418,6 @@ Object.assign(PG,{
       $("cp-bal").textContent = balTxt() + " " + curTxt();
     }
 
-    // ROLE
     $("cp-role").textContent = onRasto
       ? "Rasto"
       : acct === "real"
@@ -391,7 +442,6 @@ Object.assign(PG,{
       "Enrolled accounts on this site: " + (d.count || 0);
     $("cp-ctl").hidden = !d.enrolled;
 
-    // Keep Start/Stop labels correct if tick runs during/after busy
     const startBtn = $("cp-start");
     const stopBtn = $("cp-stop");
     if (startBtn && startBtn.dataset.busy !== "1") {
