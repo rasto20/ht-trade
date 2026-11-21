@@ -9,12 +9,12 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f28c28'/%3E%3Crect x='8' y='11' width='4' height='9' fill='%23fff'/%3E%3Crect x='14' y='13' width='4' height='8' fill='%233b1d04'/%3E%3Crect x='20' y='8' width='4' height='9' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="base.css">
-<link rel="stylesheet" href="boot.css">
-<link rel="stylesheet" href="landing.css">
-<link rel="stylesheet" href="app.css">
-<link rel="stylesheet" href="pages.css">
-<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="base.css?v=20261108a">
+<link rel="stylesheet" href="boot.css?v=20261108a">
+<link rel="stylesheet" href="landing.css?v=20261108a">
+<link rel="stylesheet" href="app.css?v=20261108a">
+<link rel="stylesheet" href="pages.css?v=20261108a">
+<link rel="stylesheet" href="theme.css?v=20261108a">
 </head>
 <body data-view="boot">
 <section id="boot">
@@ -93,11 +93,20 @@
   <div class="dr"><span class="dot" id="fdot"></span><span id="ck"></span><button class="ic" id="th" title="Toggle theme" aria-label="Toggle theme"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></button><button class="ic" id="lgx" title="Log out" aria-label="Log out"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg></button><button class="ic" id="fsb" title="Fullscreen" aria-label="Fullscreen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button></div>
  </footer>
  <button class="aib" id="ai" aria-label="Open assistant"><b>AI</b><i></i></button>
- <aside class="help" id="help" hidden aria-label="Assistant">
-  <div class="hh"><b>HT Assistant</b><button class="ic" id="hx" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <div class="hs"><input id="hq" placeholder="Ask a question, e.g. martingale" autocomplete="off"></div>
-  <div class="hl" id="hl"></div>
-  <div class="hf"><button class="btn b-or full" data-page="Tutorials">Open tutorials</button></div>
+ <aside class="help" id="help" hidden aria-label="AI market scanner">
+  <div class="hh"><b>AI Market Scanner</b><button class="ic" id="hx" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="htabs"><button type="button" data-ht="scan" class="on">Scanner</button><button type="button" data-ht="faq">Help</button></div>
+  <div class="hpane" id="hp-scan">
+   <div class="sch"><div class="rad" id="rad" aria-hidden="true"><i></i><i></i><i></i></div><div class="sct"><b id="scs">Ready</b><small id="sct">Scans every market for the strongest signal</small><span class="spr"><i id="scp"></i></span></div><button type="button" class="btn b-or" id="scr">Rescan</button></div>
+   <div class="scf" id="scf"></div>
+   <div class="scl2" id="scl2"></div>
+   <p class="scn">Based on recent tick frequencies. Synthetic markets are random, so a strong reading does not guarantee the next trade wins.</p>
+  </div>
+  <div class="hpane" id="hp-faq" hidden>
+   <div class="hs"><input id="hq" placeholder="Ask a question, e.g. martingale" autocomplete="off"></div>
+   <div class="hl" id="hl"></div>
+   <div class="hf"><button class="btn b-or full" data-page="Tutorials">Open tutorials</button></div>
+  </div>
  </aside>
  <div class="dwb" id="dwb" hidden></div>
  <aside class="drw" id="dw" hidden aria-label="Menu"><div class="dwt"><span class="brand sm"><span class="bl"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#f28c28"/><path d="M10 6v20M16 9v15M22 5v18" stroke="#fff" stroke-width="1.5"/><rect x="8" y="11" width="4" height="9" fill="#fff"/><rect x="14" y="13" width="4" height="8" fill="#3b1d04"/><rect x="20" y="8" width="4" height="9" fill="#fff"/></svg></span><span class="bt"><b>HT TRADES</b></span></span><button class="ic" id="dwx" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="dwl" id="dwl"></div></aside>
@@ -111,22 +120,22 @@
 <div id="ovl" hidden><div class="ovb"><span class="spin"></span><b id="ovt"></b><small id="ovs"></small></div></div>
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="config.js"></script>
-<script src="oauth.js"></script>
-<script src="core.js"></script>
-<script src="chart.js"></script>
-<script src="boot.js"></script>
-<script src="engine.js"></script>
-<script src="deriv.js"></script>
-<script src="kit.js"></script>
-<script src="p1.js"></script>
-<script src="p2.js"></script>
-<script src="p3.js"></script>
-<script src="p4.js"></script>
-<script src="account.js"></script>
-<script src="admin.js"></script>
-<script src="ui.js"></script>
-<script src="help.js"></script>
-<script src="feed.js"></script>
+<script src="config.js?v=20261108a"></script>
+<script src="oauth.js?v=20261108a"></script>
+<script src="core.js?v=20261108a"></script>
+<script src="chart.js?v=20261108a"></script>
+<script src="boot.js?v=20261108a"></script>
+<script src="engine.js?v=20261108a"></script>
+<script src="deriv.js?v=20261108a"></script>
+<script src="kit.js?v=20261108a"></script>
+<script src="p1.js?v=20261108a"></script>
+<script src="p2.js?v=20261108a"></script>
+<script src="p3.js?v=20261108a"></script>
+<script src="p4.js?v=20261108a"></script>
+<script src="account.js?v=20261108a"></script>
+<script src="admin.js?v=20261108a"></script>
+<script src="ui.js?v=20261108a"></script>
+<script src="help.js?v=20261108a"></script>
+<script src="feed.js?v=20261108a"></script>
 </body>
 </html>
