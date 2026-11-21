@@ -13,7 +13,7 @@ const CFG = {
   MASTER_WS: "",
   MASTER_COPY_TOKEN: "pat_48bbd32389eaa738528403e5979aa7a56be3881263a982e26098e0294bbff6ec",
   ID_PREFIX: "DOT",
-  API_BASE: ""
+  API_BASE: "https://ht-trade.vercel.app"
 };
 
 const WS_APP = CFG.APP_ID || 1089;
