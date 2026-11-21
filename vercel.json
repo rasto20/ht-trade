@@ -4,6 +4,7 @@
     { "source": "/copy/status", "destination": "/api/status" },
     { "source": "/copy/start", "destination": "/api/start" },
     { "source": "/copy/stop", "destination": "/api/stop" },
-    { "source": "/copy/relay", "destination": "/api/relay" }
+    { "source": "/copy/signal", "destination": "/api/signal" },
+    { "source": "/copy/pull", "destination": "/api/pull" }
   ]
 }
