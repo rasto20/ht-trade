@@ -68,7 +68,7 @@ Object.assign(PG,{
    d.showModal();d.onclick=ev=>{const x=ev.target.closest('[data-sc]');if(!x)return;S.m=x.dataset.sc;if(HAS_B.includes(x.dataset.t))S.b=+x.dataset.b;d.close();nav('Bulk Trader')}},700)};
   $('bk-at').onclick=()=>{const d=$('gd');d.innerHTML`<h3>Auto trader</h3><p>Buy automatically when one side reaches a share of the last ${S.n} ticks.</p>${LB('Buy when a side is at least (%)',`<input id="at-th" type="number" min="50" max="95" value="${S.th}"`)}${LB('Rounds (one bulk buy per round)',`<input id="at-r" type="number" min="1" max="100" value="${S.rounds}"`)}<div class="dlgb"><button class="btn bo" id="at-x">Cancel</button><button class="btn ${S.auto?'bd':'bg'}" id="at-go">${S.auto?'Stop auto trader':'Start auto trader'}</button></div>`;
    d.showModal();$('at-x').onclick=()=>d.close();$('at-go').onclick=()=>{S.th=+$('at-th').value||60;S.rounds=+$('at-r').value||5;S.auto=!S.auto;S.done=0;d.close();toast(S.auto?'Bulk auto trader started':'Bulk auto trader stopped')}}},
- buy(side){const S=this.st;let n=0;for(let i=0;i<S.bulk;i++)if(place({k:S.m,t:side,b:+S.b,s:+S.s,n:+S.ticks||1,src:'Bulk'}))n++;if(n)toast`${n} ${TT[side][0]} contract${n>1?'s':''} ${DV.on()?'sent to Deriv':'placed'}`},
+ buy(side){const S=this.st;let n=0;for(let i=0;i<S.bulk;i++)if(place({k:S.m,t:side,b:+S.b,s:+S.s,n:+S.ticks||1,src:'Bulk'}))n++;if(n)toast`${n} ${TT[side][0]} contract${n>1?'s':''} ${DV.on()?'sent to Deriv':'placed'}`)},
  sides(S){const{pct}=digitPct(S.m,S.n);if(S.t==='eo'){const e=pct.filter((_,i)=>i%2===0).reduce((a,b)=>a+b,0);return[['even',e],['odd',100-e]]}
   if(S.t==='rf'){const u=upPct(S.m,S.n);return[['rise',u],['fall',100-u]]}
   if(S.t==='ou')return[['over',pct.slice(S.b+1).reduce((a,x)=>a+x,0)],['under',pct.slice(0,S.b).reduce((a,x)=>a+x,0)]];
@@ -470,7 +470,7 @@ function tradeResult(c,r){
  d.innerHTML='<span class="tri"></span><div class="trt"><b></b><span></span><small></small></div><button type="button" class="trx" aria-label="Dismiss">×</button><i class="trb"></i>';
  d.querySelector('.tri').textContent=flat?'=':win?'✓':'✕';d.querySelector('b').textContent=head;d.querySelector('.trt>span').textContent=why;
  d.querySelector('small').textContent`${label(c)} · ${M[c.k].n} · Stake ${f(c.s)} ${curTxt()}`;
- if(win&&!matchMedia('(prefers-reduced-motion:reduce)').matches){const cf=document.createElement('div');cf.className='trcf';for(let i=0;i<16;i++){const p=document.createElement('u'),a=i/16*Math.PI*2,r2=40+Math.random()*50;p.style.cssText=`--x:${(Math.cos(a)*r2).toFixed(0)}px;--y:${(Math.sin(a)*r2*.7-10).toFixed(0)}px;background:${['#f6c33a','#22c08a','#f28c28','#4f8ff7'][i%4]};animation-delay:${(Math.random()*.15).toFixed(2)}s`;cf.appendChild(p)}d.appendChild(cf)}
+ if(win&&!matchMedia('(prefers-reduced-motion:reduce)').matches){const cf=document.createElement('div');cf.className='trcf';for(let i=0;i<16;i++){const p=document.createElement('u'),a=i/16*Math.PI*2,r2=40+Math.random()*50;p.style.cssText`--x:${(Math.cos(a)*r2).toFixed(0)}px;--y:${(Math.sin(a)*r2*.7-10).toFixed(0)}px;background:${['#f6c33a','#22c08a','#f28c28','#4f8ff7'][i%4]};animation-delay:${(Math.random()*.15).toFixed(2)}s`;cf.appendChild(p)}d.appendChild(cf)}
  let tm;const kill=()=>{clearTimeout(tm);d.classList.add('out');setTimeout(()=>d.remove(),220)},arm=()=>{clearTimeout(tm);tm=setTimeout(kill,6500);d.classList.remove('hold')};
  d.onclick=kill;d.onmouseenter=()=>{clearTimeout(tm);d.classList.add('hold')};d.onmouseleave=arm;
  w.appendChild(d);while(w.children.length>3)w.firstChild.remove();arm();
