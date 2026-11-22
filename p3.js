@@ -1,4 +1,4 @@
-/* Signal AI, Bulk Trader, Manual Trader, Copy Trading */
+   /* Signal AI, Bulk Trader, Manual Trader, Copy Trading */
 
 /* ---------- shared statistics ---------- */
 const lastDigits=(k,n)=>H[k].slice(-n).map(v=>digit(k,v));
