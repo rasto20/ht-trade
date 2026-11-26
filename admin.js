@@ -5,8 +5,8 @@
 (function () {
   const SIDE_LEFT = "left";
   const SIDE_RIGHT = "right";
-  const LABEL = { left: "Real", right: "Demo" };
-  const RASTO_A_OFFSET = 9999.7;
+  const LABEL = { left: "Rasto", right: "Demo" };
+  const RASTO_A_OFFSET = 500;
   const RASTO_FAKE_ID = "ROT5432541";
 
   const COIN_SVG =
