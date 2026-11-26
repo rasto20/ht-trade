@@ -38,7 +38,7 @@ function rpTick(){const el=$('rpb');if(!el)return;const b=BOTS.main,T=trades;let
 
 Object.assign(PG,{
 'Dashboard':{html:()=>`<div class="dash tilebg">
- <section class="dmain"><h1 class="hello">Hello <span id="hid"></span>!</h1>
+ <section class="dmain"><h1 class="hello">Helclo <span id="hid"></span>!</h1>
   <p class="dsub">Import a bot from your computer or Google Drive, build it from scratch, or start with a quick strategy.</p>
   <div class="tiles">
    <button class="tile" id="t-pc"><i>${ICO('M3 4h18v12H3zM8 20h8M12 16v4')}</i>My computer</button>
